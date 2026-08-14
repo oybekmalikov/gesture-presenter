@@ -88,12 +88,12 @@ export default function App() {
 
 	if (!presentation) {
 		return (
-		<div style={{ minHeight: '100%', position: 'relative' }}>
-			<button onClick={() => setModule('model3d')} style={moduleButton}>
-				3D tegirmon →
-			</button>
-			<FileUploader onUploaded={handleUploaded} />
-		</div>
+			<div style={{ minHeight: '100%', position: 'relative' }}>
+				<button onClick={() => setModule('model3d')} style={moduleButton}>
+					3D model →
+				</button>
+				<FileUploader onUploaded={handleUploaded} />
+			</div>
 		);
 	}
 
