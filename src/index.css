@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #0b0d12;
+  --surface: #14171f;
+  --surface-2: #1b1f29;
+  --border: #262b36;
+  --text: #e7e9ee;
+  --text-muted: #8a8f9c;
+  --accent: #f2b705;
+  --accent-soft: rgba(242, 183, 5, 0.16);
+  --accent-2: #7c5cfc;
+  --accent-2-soft: rgba(124, 92, 252, 0.16);
+  --danger: #ff5d5d;
+  --success: #35d488;
+  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+  --radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  background-image: radial-gradient(circle at 18% 14%, rgba(124, 92, 252, 0.08), transparent 45%),
+    radial-gradient(circle at 82% 86%, rgba(242, 183, 5, 0.06), transparent 40%);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── 3D Viewer: cursor ripple when magnetically snapped ── */
+@keyframes cursorRipple {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* ── 3D Viewer: metadata panel slide-in ── */
+@keyframes panelSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
