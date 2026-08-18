@@ -78,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }}
             >
               <img
-                src="/logo/logo-10.png"
+                src="./logo/logo-10.png"
                 alt="OKMK"
                 style={{
                   width: '100%',

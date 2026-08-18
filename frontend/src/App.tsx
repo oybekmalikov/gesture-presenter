@@ -136,13 +136,13 @@ export default function App() {
 
   const activePresentationUrl = useMemo(() => {
     if (!currentPresentation) return '';
-    return currentPresentation.url;
+    return ApiService.resolveFileUrl(currentPresentation.url);
   }, [currentPresentation]);
 
   const activeModelUrl = useMemo(() => {
-    if (currentModel) return currentModel.url;
+    if (currentModel) return ApiService.resolveFileUrl(currentModel.url);
     const firstGlb = files.find((f) => f.fileType === 'glb');
-    return firstGlb ? firstGlb.url : '/models/sag_mill_v2.glb';
+    return firstGlb ? ApiService.resolveFileUrl(firstGlb.url) : ApiService.resolveFileUrl('/models/sag_mill_v2.glb');
   }, [currentModel, files]);
 
   const activeModelName = useMemo(() => {

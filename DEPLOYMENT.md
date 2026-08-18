@@ -35,9 +35,20 @@ Docker usulida barcha bog'liqliklar (LibreOffice, Node.js, OpenCASCADE, Nginx, s
    ```
 
 > [!TIP]
-> Tizim avtomatik ravishda `http://server_ip` (port 80) va `http://server_ip:4664` da ishlaydi. Fayllar `./backend/public` papkasida saqlanib qoladi (persist bo'ladi).
+> Tizim avtomatik ravishda `http://server_ip:4664` portida ishga tushadi.
+> Agar serveringizda 80-port bo'sh bo'lsa yoki boshqa port qo'ymoqchi bo'lsangiz, `docker-compose.yml` faylida yoki `.env` da `FRONTEND_PORT=80` (yoki `3000`, `8080`) qilib o'zgartirishingiz mumkin.
 
----
+### ⚠️ Agar `Bind for 0.0.0.0:80 failed: port is already allocated` xatoligi chiqsa:
+Serveringizda 80-portni boshqa xizmat (masalan, Nginx yoki Apache) ishlatayotgan bo'ladi.
+1. `docker-compose.yml` da biz portni `4664:80` ga sozladik, shunda hech qanday port to'qnashuvi bo'lmaydi va tizim `http://server_ip:4664` da ochiladi.
+2. Agar asosiy 80-port orqali ochmoqchi bo'lsangiz, serverdagi Nginx da quyidagicha oddiy reverse-proxy qo'yishingiz mumkin:
+   ```nginx
+   location / {
+       proxy_pass http://127.0.0.1:4664;
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+   }
+   ```
 
 ## 2-USUL: Linux (Ubuntu/Debian) Serverda PM2 va Nginx orqali o'rnatish (Native usul)
 
