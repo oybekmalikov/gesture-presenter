@@ -1,0 +1,196 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg-deep: #06080e;
+  --bg-base: #0a0d16;
+  --bg-surface: #101626;
+  --bg-surface-2: #161e33;
+  --bg-surface-3: #1c2742;
+  --bg-card: rgba(16, 22, 38, 0.75);
+  --bg-card-hover: rgba(22, 30, 51, 0.9);
+
+  --border: rgba(56, 189, 248, 0.16);
+  --border-bright: rgba(0, 229, 255, 0.35);
+  --border-accent: rgba(245, 158, 11, 0.4);
+
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+
+  --cyan: #00e5ff;
+  --cyan-glow: 0 0 16px rgba(0, 229, 255, 0.4);
+  --cyan-soft: rgba(0, 229, 255, 0.12);
+
+  --amber: #f59e0b;
+  --amber-glow: 0 0 16px rgba(245, 158, 11, 0.4);
+  --amber-soft: rgba(245, 158, 11, 0.12);
+
+  --blue: #3b82f6;
+  --blue-glow: 0 0 16px rgba(59, 130, 246, 0.4);
+  --blue-soft: rgba(59, 130, 246, 0.12);
+
+  --success: #10b981;
+  --success-glow: 0 0 16px rgba(16, 185, 129, 0.4);
+  --success-soft: rgba(16, 185, 129, 0.12);
+
+  --danger: #ef4444;
+  --danger-glow: 0 0 16px rgba(239, 68, 68, 0.4);
+  --danger-soft: rgba(239, 68, 68, 0.12);
+
+  --font-brand: 'Orbitron', 'Space Grotesk', sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius-sm: 6px;
+  --radius: 12px;
+  --radius-lg: 18px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  background-color: var(--bg-deep);
+  background-image:
+    radial-gradient(circle at 10% 15%, rgba(0, 229, 255, 0.05), transparent 40%),
+    radial-gradient(circle at 90% 85%, rgba(245, 158, 11, 0.05), transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.03), transparent 60%);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-surface-3);
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cyan);
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+/* OKMK High-Tech Components & Animations */
+@keyframes glowPulse {
+
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+
+  100% {
+    transform: translateY(1000%);
+  }
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes cursorRipple {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@keyframes panelSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-24px) scale(0.96);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Utility classes */
+.okmk-glass {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+}
+
+.okmk-glow-cyan {
+  box-shadow: var(--cyan-glow);
+}
+
+.okmk-glow-amber {
+  box-shadow: var(--amber-glow);
+}
+
+.okmk-card-interactive {
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
+}
+
+.okmk-card-interactive:hover {
+  transform: translateY(-3px);
+  border-color: var(--cyan);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), 0 0 16px rgba(0, 229, 255, 0.15);
+  background: var(--bg-card-hover);
+}

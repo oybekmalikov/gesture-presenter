@@ -1,0 +1,53 @@
+[
+  {
+    "id": "67f4bde0-948c-40b2-aaa9-20238bed4a8b",
+    "originalName": "Oth97_CNO_Consul.glb",
+    "fileName": "Oth97_CNO_Consul_0030cf4c.glb",
+    "fileType": "glb",
+    "size": 18465292,
+    "createdAt": "2026-08-18T09:08:51.337Z",
+    "url": "/files/glb/Oth97_CNO_Consul_0030cf4c.glb",
+    "downloadUrl": "/api/files/67f4bde0-948c-40b2-aaa9-20238bed4a8b/download"
+  },
+  {
+    "id": "27252cbb-5785-4895-8f4a-64ce5e7282d1",
+    "originalName": "ИИ проекты.pdf",
+    "fileName": "__23b36249.pdf",
+    "fileType": "pdf",
+    "size": 49404983,
+    "createdAt": "2026-08-18T08:35:48.497Z",
+    "url": "/files/pdf/__23b36249.pdf",
+    "downloadUrl": "/api/files/27252cbb-5785-4895-8f4a-64ce5e7282d1/download"
+  },
+  {
+    "id": "cef3cc74-f361-44aa-8010-d264d7949f83",
+    "originalName": "AGMK-2026-AV0075.pdf",
+    "fileName": "AGMK-2026-AV0075_7ad0abbd.pdf",
+    "fileType": "pdf",
+    "size": 2791156,
+    "createdAt": "2026-08-18T08:35:22.327Z",
+    "url": "/files/pdf/AGMK-2026-AV0075_7ad0abbd.pdf",
+    "downloadUrl": "/api/files/cef3cc74-f361-44aa-8010-d264d7949f83/download"
+  },
+  {
+    "id": "d24b551a-773a-437f-a880-ba648d0c835f",
+    "originalName": "okmk_corporate_demo.pdf",
+    "fileName": "okmk_corporate_demo_15718c94.pdf",
+    "fileType": "pdf",
+    "size": 6618,
+    "convertedFrom": "pptx",
+    "createdAt": "2026-08-18T08:23:29.325Z",
+    "url": "/files/pdf/okmk_corporate_demo_15718c94.pdf",
+    "downloadUrl": "/api/files/d24b551a-773a-437f-a880-ba648d0c835f/download"
+  },
+  {
+    "id": "f9c767da-d2fd-4c69-8430-352556a525e9",
+    "originalName": "sag_mill_v2.glb",
+    "fileName": "sag_mill_v2.glb",
+    "fileType": "glb",
+    "size": 56455012,
+    "createdAt": "2026-08-18T08:19:03.035Z",
+    "url": "/files/glb/sag_mill_v2.glb",
+    "downloadUrl": "/api/files/f9c767da-d2fd-4c69-8430-352556a525e9/download"
+  }
+]

@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: okmk_presenter_backend
+    restart: always
+    environment:
+      - PORT=5050
+      - ROOT_PASSWORD=${ROOT_PASSWORD:-okmk2026}
+      - STORAGE_PDF_DIR=./public/pdf
+      - STORAGE_GLB_DIR=./public/glb
+      - TEMP_DIR=./public/temp
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./backend/public:/app/public
+    networks:
+      - okmk_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: okmk_presenter_frontend
+    restart: always
+    ports:
+      - "4664:80"
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - okmk_network
+
+networks:
+  okmk_network:
+    driver: bridge

@@ -1,0 +1,19 @@
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gold" x1="18" y1="6" x2="78" y2="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE7A3"/>
+      <stop offset="0.22" stop-color="#F7B927"/>
+      <stop offset="0.48" stop-color="#FFF3BD"/>
+      <stop offset="0.72" stop-color="#C77B04"/>
+      <stop offset="1" stop-color="#FFD86D"/>
+    </linearGradient>
+    <linearGradient id="darkGold" x1="20" y1="90" x2="76" y2="8" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9B5E00"/>
+      <stop offset="0.45" stop-color="#E59D13"/>
+      <stop offset="1" stop-color="#FFF2B6"/>
+    </linearGradient>
+  </defs>
+  <path d="M48 5L78 81H65L48 35L31 81H18L48 5Z" fill="url(#gold)" stroke="url(#darkGold)" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M18 42H30V74C30 80 35 85 42 85H54C61 85 66 80 66 74V42H78V74C78 87 68 94 54 94H42C28 94 18 87 18 74V42Z" fill="url(#gold)" stroke="url(#darkGold)" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="48" cy="66" r="14" fill="url(#gold)" stroke="url(#darkGold)" stroke-width="3"/>
+</svg>
