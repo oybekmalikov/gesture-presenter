@@ -12,6 +12,7 @@ const EMPTY_FRAME: GestureFrame = {
 export function usePresentationGestures(
 	hands: RawHand[],
 	active: boolean,
+  allowZoom: boolean = true,
 ): GestureFrame {
 	const processorRef = useRef<GestureProcessor>(new GestureProcessor());
 	const [frame, setFrame] = useState<GestureFrame>(EMPTY_FRAME);
@@ -22,8 +23,8 @@ export function usePresentationGestures(
 			setFrame(EMPTY_FRAME);
 			return;
 		}
-		setFrame(processorRef.current.process(hands));
-	}, [hands, active]);
+		setFrame(processorRef.current.process(hands, performance.now(), allowZoom));
+	}, [hands, active, allowZoom]);
 
 	return frame;
 }

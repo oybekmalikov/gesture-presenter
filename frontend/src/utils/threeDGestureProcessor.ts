@@ -44,7 +44,22 @@ export class ThreeDGestureProcessor {
 		return state;
 	}
 
-	process(hands: RawHand[]): ThreeDGestureFrame {
+	process(rawHands: RawHand[]): ThreeDGestureFrame {
+		const handsWithArea = rawHands.map(h => {
+			let minX = 1, maxX = 0, minY = 1, maxY = 0;
+			for (const p of h.landmarks) {
+				if (p.x < minX) minX = p.x;
+				if (p.x > maxX) maxX = p.x;
+				if (p.y < minY) minY = p.y;
+				if (p.y > maxY) maxY = p.y;
+			}
+			return { ...h, area: (maxX - minX) * (maxY - minY) };
+		});
+
+		handsWithArea.sort((a, b) => b.area - a.area);
+
+		const hands = handsWithArea.slice(0, 2);
+
 		const visible = new Set(hands.map(hand => hand.handedness));
 		for (const handedness of this.states.keys()) {
 			if (!visible.has(handedness)) this.states.delete(handedness);

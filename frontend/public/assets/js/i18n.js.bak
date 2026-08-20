@@ -1,0 +1,633 @@
+/**
+ * SafeGuard AI - Internationalization (i18n) Module
+ */
+
+const DICTIONARY = {
+  en: {
+    flag: '🇬🇧',
+    name: 'EN',
+    strings: {
+      "Dashboard": "Dashboard",
+      "Cameras": "Cameras",
+      "Incidents": "Incidents",
+      "Analytics": "Analytics",
+      
+      "Monitoring": "Monitoring",
+      "Management": "Management",
+      "System": "System",
+      "User Management": "User Management",
+      "Reports": "Reports",
+      "Archive": "Archive",
+      "AI Training": "AI Training",
+      "Settings": "Settings",
+
+      "Active Cameras": "Active Cameras",
+      "Violations Today": "Violations Today",
+      "Compliance Score": "Compliance Score",
+      "Recent Incidents": "Recent Incidents",
+
+      "Search cameras, incidents, zones...": "Search cameras, incidents, zones...",
+      "Search cameras, incidents...": "Search cameras, incidents...",
+      "Safety Operator": "Safety Operator",
+      "Administrator": "Administrator",
+      "A. Rakhimov": "A. Rakhimov",
+      "Shift B": "Shift B",
+
+      "System Health": "System Health",
+      "Storage": "Storage",
+      "Network": "Network",
+      "Good": "Good",
+      "Nominal": "Nominal",
+      "Degraded": "Degraded",
+      "Critical": "Critical",
+
+      "Operations Dashboard": "Operations Dashboard",
+      "Real-time PPE safety monitoring": "Real-time PPE safety monitoring",
+      "All systems nominal": "All systems nominal",
+
+      "PENDING REVIEW": "PENDING REVIEW",
+      "Awaiting operator action": "Awaiting operator action",
+      "TASDIQLANGAN": "TASDIQLANGAN",
+      "FALSE ALARMS": "FALSE ALARMS",
+      "Accuracy": "Accuracy",
+      "Site-wide PPE rate": "Site-wide PPE rate",
+      "vs. last week": "vs. last week",
+      "vs. yesterday": "vs. yesterday",
+      "of 22 total": "of 22 total",
+      "offline": "offline",
+
+      "Live Camera Feeds": "Live Camera Feeds",
+      "Online": "Online",
+
+      "Violation Trend - Today": "Violation Trend - Today",
+      "For 2h block": "For 2h block",
+      "PPE Compliance Rate": "PPE Compliance Rate",
+      "Current shift": "Current shift",
+      "Zone Risk Heatmap": "Zone Risk Heatmap",
+      "Last 4 hours": "Last 4 hours",
+      "Safe": "Safe",
+      "Risk": "Risk",
+
+      "Helmet": "Helmet",
+      "Safety Vest": "Safety Vest",
+      "Gloves": "Gloves",
+      "Footwear": "Footwear",
+
+      "Operator Activity Log": "Operator Activity Log",
+      "Incident Timeline": "Incident Timeline",
+
+      "confirmed violation": "confirmed violation",
+      "false alarm dismissed": "false alarm dismissed",
+      "Violation confirmed": "Violation confirmed",
+      "Alert raised": "Alert raised",
+      "False alarm dismissed": "False alarm dismissed",
+      "Camera restored": "Camera restored",
+
+      "Camera Management": "Camera Management",
+      "cameras registered": "cameras registered",
+      "online": "online",
+      "Updated": "Updated",
+      "All Status": "All Status",
+      "All Types": "All Types",
+
+      "CAMERA": "CAMERA",
+      "LOCATION": "LOCATION",
+      "ZONE": "ZONE",
+      "STATUS": "STATUS",
+      "AI MODE": "AI MODE",
+      "LAST EVENT": "LAST EVENT",
+      "CONFIDENCE": "CONFIDENCE",
+      "UPTIME": "UPTIME",
+      "ACTIONS": "ACTIONS",
+
+      "View": "View",
+      "Config": "Config",
+      "Diagnose": "Diagnose",
+      "AI Engine": "AI Engine",
+
+      "Live Cameras": "Live Cameras",
+      "Grid view of all site cameras": "Grid view of all site cameras",
+      "All Zones": "All Zones",
+      "Zone A": "Zone A",
+      "Zone B": "Zone B",
+      "Zone C": "Zone C",
+      "Zone D": "Zone D",
+      "Filter by status...": "Filter by status...",
+
+      "Incident Log": "Incident Log",
+      "Review and manage alerts": "Review and manage alerts",
+      "Export": "Export",
+      "Export PDF": "Export PDF",
+      "All Types": "All Types",
+      "No Helmet": "No Helmet",
+      "No Vest": "No Vest",
+      "Fire / Smoke": "Fire / Smoke",
+      "Zone Violation": "Zone Violation",
+      "Unknown Person": "Unknown Person",
+
+      "Pending": "Pending",
+      "Confirmed": "Confirmed",
+      "Dismissed": "Dismissed",
+      "Alert": "Alert",
+      "Warning": "Warning",
+
+      "Camera": "Camera",
+      "Location": "Location",
+      "Type": "Type",
+      "Severity": "Severity",
+      "Detected": "Detected",
+      "Time": "Time",
+      "Action": "Action",
+      "Confirm": "Confirm",
+      "Dismiss": "Dismiss",
+
+      "High": "High",
+      "Medium": "Medium",
+      "Low": "Low",
+
+      "View All": "View All",
+
+      "Safety Analytics": "Safety Analytics",
+      "Trends and compliance data": "Trends and compliance data",
+      "Compliance Trend": "Compliance Trend",
+      "Violations by Zone": "Violations by Zone",
+
+      "Camera Details": "Camera Details",
+      "Uptime": "Uptime",
+      "AI Mode": "AI Mode",
+      "Close": "Close",
+      "Live Feed": "Live Feed",
+      "View Logs": "View Logs",
+
+      "Main Entrance Gate": "Main Entrance Gate",
+      "Main Shaft Entrance": "Main Shaft Entrance",
+      "Ventilation Shaft B": "Ventilation Shaft B",
+      "Storage Area D1": "Storage Area D1",
+      "Detonator Store": "Detonator Store",
+      "Shaft Access": "Shaft Access",
+      "Conveyor Belt A": "Conveyor Belt A",
+      "Pump Station": "Pump Station",
+      "Service Gate": "Service Gate",
+      "Fuel Storage": "Fuel Storage",
+      "Transport Hub": "Transport Hub",
+
+      "PPE + Zone": "PPE + Zone",
+      "Fire + Smoke": "Fire + Smoke",
+      "PPE": "PPE",
+      "Zone": "Zone"
+    }
+  },
+  ru: {
+    flag: '🇷🇺',
+    name: 'RU',
+    strings: {
+      "Dashboard": "Дашборд",
+      "Cameras": "Камеры",
+      "Incidents": "Инциденты",
+      "Analytics": "Аналитика",
+      
+      "Monitoring": "Мониторинг",
+      "Management": "Управление",
+      "System": "Система",
+      "User Management": "Пользователи",
+      "Reports": "Отчеты",
+      "Archive": "Архив",
+      "AI Training": "Обучение ИИ",
+      "Settings": "Настройки",
+
+      "Active Cameras": "Активные Камеры",
+      "Violations Today": "Нарушения",
+      "Compliance Score": "Индекс Безопасности",
+      "Recent Incidents": "Последние Инциденты",
+
+      "Search cameras, incidents, zones...": "Поиск камер, инцидентов, зон...",
+      "Search cameras, incidents...": "Поиск камер, инцидентов...",
+      "Safety Operator": "Оператор Безопасности",
+      "Administrator": "Администратор",
+      "A. Rakhimov": "А. Рахимов",
+      "Shift B": "Смена B",
+
+      "System Health": "Состояние Системы",
+      "Storage": "Хранилище",
+      "Network": "Сеть",
+      "Good": "В норме",
+      "Nominal": "В норме",
+      "Degraded": "Ухудшено",
+      "Critical": "Критично",
+      "Operations Dashboard": "Операционная Панель",
+      "Real-time PPE safety monitoring": "Мониторинг СИЗ в реальном времени",
+      "All systems nominal": "Все системы в норме",
+
+      "PENDING REVIEW": "ОЖИДАЮТ ПРОВЕРКИ",
+      "Awaiting operator action": "Ожидают действия оператора",
+      "TASDIQLANGAN": "ПОДТВЕРЖДЕНО",
+      "FALSE ALARMS": "ЛОЖНЫЕ ТРЕВОГИ",
+      "Accuracy": "Точность",
+      "Site-wide PPE rate": "Общий уровень ношения СИЗ",
+      "vs. last week": "к прошлой неделе",
+      "vs. yesterday": "ко вчерашнему дню",
+      "of 22 total": "из 22 всего",
+      "offline": "не в сети",
+
+      "Live Camera Feeds": "Трансляции с камер",
+      "Online": "В сети",
+
+      "Violation Trend — Today": "Тренд нарушений — Сегодня",
+      "For 2h block": "За 2 часа",
+      "PPE Compliance Rate": "Уровень соблюдения ТБ",
+      "Current shift": "Текущая смена",
+      "Zone Risk Heatmap": "Тепловая карта рисков",
+      "Last 4 hours": "За последние 4 часа",
+      "Safe": "Безопасно",
+      "Risk": "Риск",
+
+      "Helmet": "Каска",
+      "Safety Vest": "Жилет",
+      "Gloves": "Перчатки",
+      "Footwear": "Обувь",
+
+      "Operator Activity Log": "Журнал действий оператора",
+      "Incident Timeline": "Таймлайн инцидентов",
+
+      "confirmed violation": "подтвердил нарушение",
+      "false alarm dismissed": "отклонил ложную тревогу",
+      "Violation confirmed": "Нарушение подтверждено",
+      "Alert raised": "Тревога поднята",
+      "False alarm dismissed": "Ложная тревога отменена",
+      "Camera restored": "Камера восстановлена",
+
+      "Camera Management": "Управление Камерами",
+      "+ Add Camera": "+ Добавить камеру",
+      "Filter": "Фильтр",
+      "cameras registered": "камер зарегистрировано",
+      "online": "в сети",
+      "Updated": "Обновлено",
+      "All Status": "Все статусы",
+      "All Types": "Все типы",
+
+      "CAMERA": "КАМЕРА",
+      "LOCATION": "ЛОКАЦИЯ",
+      "ZONE": "ЗОНА",
+      "STATUS": "СТАТУС",
+      "AI MODE": "РЕЖИМ ИИ",
+      "LAST EVENT": "ПОСЛЕДНЕЕ СОБЫТИЕ",
+      "CONFIDENCE": "УВЕРЕННОСТЬ",
+      "UPTIME": "АПТАЙМ",
+      "ACTIONS": "ДЕЙСТВИЯ",
+
+      "View": "Смотреть",
+      "Config": "Настройки",
+      "Diagnose": "Диагностика",
+      "AI Engine": "ИИ Движок",
+
+      "Live Cameras": "Камеры (Live)",
+      "Grid view of all site cameras": "Сетка всех камер на объекте",
+      "All Zones": "Все Зоны",
+      "Zone A": "Зона А",
+      "Zone B": "Зона Б",
+      "Zone C": "Зона В",
+      "Zone D": "Зона Г",
+      "Filter by status...": "Фильтр по статусу...",
+
+      "Incident Management": "Управление Инцидентами",
+      "Incident Log": "Журнал Инцидентов",
+      "Review and manage alerts": "Просмотр и управление тревогами",
+      "Generate Report": "Создать Отчет",
+      "+ New Report": "+ Новый Отчет",
+      "Export": "Экспорт",
+      "Export PDF": "Экспорт в PDF",
+      "Export CSV": "Экспорт в CSV",
+      "All Types": "Все типы",
+      "No Helmet": "Без каски",
+      "No Vest": "Без жилета",
+      "Fire / Smoke": "Огонь / Дым",
+      "Fire/Smoke": "Огонь/Дым",
+      "Zone Violation": "Нарушение зоны",
+      "Unknown Person": "Посторонний",
+
+      "Pending": "Ожидает",
+      "Confirmed": "Подтверждено",
+      "Dismissed": "Отклонено",
+      "Alert": "Тревога",
+      "Warning": "Внимание",
+
+      "Camera": "Камера",
+      "Location": "Локация",
+      "Type": "Тип",
+      "Severity": "Опасность",
+      "Detected": "Обнаружено",
+      "Time": "Время",
+      "Action": "Действие",
+      "Confirm": "Подтвердить",
+      "Dismiss": "Отклонить",
+
+      "High": "Высокая",
+      "Medium": "Средняя",
+      "Low": "Низкая",
+
+      "View All": "Смотреть все",
+
+      "Safety Analytics": "Аналитика Безопасности",
+      "Trends and compliance data": "Тренды и данные о соблюдении норм",
+      "Compliance Trend": "Тренд безопасности",
+      "Violations by Zone": "Нарушения по зонам",
+
+      "Camera Details": "Детали камеры",
+      "Uptime": "Аптайм",
+      "AI Mode": "Режим ИИ",
+      "Close": "Закрыть",
+      "Live Feed": "Прямой эфир",
+      "View Logs": "Смотреть логи",
+
+      "Main Entrance Gate": "Главный Вход",
+      "Main Shaft Entrance": "Главный вход в шахту",
+      "Ventilation Shaft B": "Вентиляционная шахта Б",
+      "Storage Area D1": "Складская зона Д1",
+      "Detonator Store": "Склад Детонаторов",
+      "Shaft Access": "Доступ в Шахту",
+      "Conveyor Belt A": "Конвейерная Лента А",
+      "Pump Station": "Насосная Станция",
+      "Service Gate": "Служебный Вход",
+      "Fuel Storage": "Хранилище Топлива",
+      "Transport Hub": "Транспортный Узел",
+
+      "PPE + Zone": "СИЗ + Зона",
+      "Fire + Smoke": "Огонь + Дым",
+      "PPE": "СИЗ",
+      "Zone": "Зона"
+    }
+  },
+  uz: {
+    flag: '🇺🇿',
+    name: 'UZ',
+    strings: {
+      "Dashboard": "Boshqaruv Paneli",
+      "Cameras": "Kameralar",
+      "Incidents": "Hodisalar",
+      "Analytics": "Tahlillar",
+      
+      "Monitoring": "Monitoring",
+      "Management": "Boshqaruv",
+      "System": "Tizim",
+      "User Management": "Foydalanuvchilar",
+      "Reports": "Hisobotlar",
+      "Archive": "Arxiv",
+      "AI Training": "AI O'qitish",
+      "Settings": "Sozlamalar",
+
+      "Active Cameras": "Faol Kameralar",
+      "Violations Today": "Qoidabuzarliklar",
+      "Compliance Score": "Xavfsizlik Indeksi",
+      "Recent Incidents": "So'nggi Hodisalar",
+
+      "Search cameras, incidents, zones...": "Kameralar, hodisalar, zonalarni qidirish...",
+      "Search cameras, incidents...": "Kameralar, hodisalarni qidirish...",
+      "Safety Operator": "Xavfsizlik Operatori",
+      "Administrator": "Administrator",
+      "A. Rakhimov": "A. Rahimov",
+      "Shift B": "Smena B",
+
+      "System Health": "Tizim Holati",
+      "Storage": "Xotira",
+      "Network": "Tarmoq",
+      "Good": "Yaxshi",
+      "Nominal": "Me'yorda",
+      "Degraded": "Pasaygan",
+      "Critical": "Kritik",
+
+      "Operations Dashboard": "Operatsion Panel",
+      "Real-time PPE safety monitoring": "Real vaqt rejimida xavfsizlik nazorati",
+      "All systems nominal": "Barcha tizimlar me'yorda",
+
+      "PENDING REVIEW": "TEKSHIRUV KUTILMOQDA",
+      "Awaiting operator action": "Operator harakati kutilmoqda",
+      "TASDIQLANGAN": "TASDIQLANGAN",
+      "FALSE ALARMS": "YOLG'ON TREVOGALAR",
+      "Accuracy": "Aniqlik",
+      "Site-wide PPE rate": "Umumiy SHH kiyish darajasi",
+      "vs. last week": "o'tgan haftaga nisbatan",
+      "vs. yesterday": "kechagiga nisbatan",
+      "of 22 total": "jami 22 tadan",
+      "offline": "oflayn",
+
+      "Live Camera Feeds": "Jonli Kamera Efirlari",
+      "Online": "Tarmoqda",
+
+      "Violation Trend — Today": "Qoidabuzarliklar Trendi — Bugun",
+      "For 2h block": "2 soatlik blok",
+      "PPE Compliance Rate": "Xavfsizlik Qoidalari Darajasi",
+      "Current shift": "Joriy smena",
+      "Zone Risk Heatmap": "Zonalar Xavf Xaritasi",
+      "Last 4 hours": "Oxirgi 4 soatda",
+      "Safe": "Xavfsiz",
+      "Risk": "Xavfli",
+
+      "Helmet": "Kaska",
+      "Safety Vest": "Jilet",
+      "Gloves": "Qo'lqop",
+      "Footwear": "Poyabzal",
+
+      "Operator Activity Log": "Operator Harakatlar Jurnali",
+      "Incident Timeline": "Hodisalar Vaqt Shkalasi",
+
+      "confirmed violation": "qoidabuzarlikni tasdiqladi",
+      "false alarm dismissed": "yolg'on trevogani rad etdi",
+      "Violation confirmed": "Qoidabuzarlik tasdiqlandi",
+      "Alert raised": "Trevoqa ko'tarildi",
+      "False alarm dismissed": "Yolg'on trevoga rad etildi",
+      "Camera restored": "Kamera tiklandi",
+
+      "Camera Management": "Kameralarni Boshqarish",
+      "+ Add Camera": "+ Kamera Qo'shish",
+      "Filter": "Filtr",
+      "cameras registered": "kameralar ro'yxatga olingan",
+      "online": "onlayn",
+      "Updated": "Yangilangan",
+      "All Status": "Barcha Holatlar",
+      "All Types": "Barcha Turlar",
+
+      "CAMERA": "KAMERA",
+      "LOCATION": "JOYLASHUV",
+      "ZONE": "ZONA",
+      "STATUS": "HOLAT",
+      "AI MODE": "AI REJIMI",
+      "LAST EVENT": "SO'NGGI HODISA",
+      "CONFIDENCE": "ANIQLIK",
+      "UPTIME": "ISHLASH VAQTI",
+      "ACTIONS": "HARAKATLAR",
+
+      "View": "Ko'rish",
+      "Config": "Sozlash",
+      "Diagnose": "Diagnostika",
+      "AI Engine": "AI Dvigateli",
+
+      "Live Cameras": "Jonli Kameralar",
+      "Grid view of all site cameras": "Obyektdagi barcha kameralar tarmog'i",
+      "All Zones": "Barcha Zonalar",
+      "Zone A": "A Zona",
+      "Zone B": "B Zona",
+      "Zone C": "C Zona",
+      "Zone D": "D Zona",
+      "Filter by status...": "Holat bo'yicha filtr...",
+
+      "Incident Management": "Hodisalar Boshqaruvi",
+      "Incident Log": "Hodisalar Jurnali",
+      "Review and manage alerts": "Ogohlantirishlarni ko'rish va boshqarish",
+      "Generate Report": "Hisobot Yaratish",
+      "+ New Report": "+ Yangi Hisobot",
+      "Export": "Eksport",
+      "Export PDF": "PDF shaklida yuklash",
+      "Export CSV": "CSV shaklida yuklash",
+      "All Types": "Barcha Turlar",
+      "No Helmet": "Kaskasiz",
+      "No Vest": "Jiletsiz",
+      "Fire / Smoke": "Olov / Tutun",
+      "Fire/Smoke": "Olov/Tutun",
+      "Zone Violation": "Zonaga ruxsatsiz kirish",
+      "Unknown Person": "Notanish shaxs",
+
+      "Pending": "Kutilmoqda",
+      "Confirmed": "Tasdiqlangan",
+      "Dismissed": "Rad etilgan",
+      "False Alarm": "Yolg'on Trevoga",
+      "Alert": "Xavf",
+      "Warning": "Ogohlantirish",
+      "Pending Review": "Tekshiruv kutilmoqda",
+      
+      "Camera Info": "Kamera Ma'lumoti",
+      "Camera ID": "Kamera ID",
+      "Camera": "Kamera",
+      "Location": "Joylashuv",
+      "Type": "Tur",
+      "Severity": "Xavflilik darajasi",
+      "Detected": "Aniqlangan vaqt",
+      "Time": "Vaqt",
+      "Action": "Harakat",
+      "Confirm": "Tasdiqlash",
+      "✓ Confirm Violation": "✓ Qoidabuzarlikni Tasdiqlash",
+      "✗ False Alarm": "✗ Yolg'on Trevoga",
+      "Dismiss": "Rad etish",
+      
+      "High": "Yuqori",
+      "Medium": "O'rta",
+      "Low": "Past",
+      
+      "View All": "Barchasini Ko'rish",
+      "View All →": "Barchasini Ko'rish →",
+      
+      "Analytics & Insights": "Tahlillar",
+      "Safety Analytics": "Xavfsizlik Tahlili",
+      "Trends and compliance data": "Trendlar va qoidalar holati",
+      "Compliance Trend": "Xavfsizlik Trendi",
+      "Violations by Zone": "Zonalar bo'yicha qoidabuzarliklar",
+
+      "Camera Details": "Kamera Tafsilotlari",
+      "Uptime": "Ishlash vaqti",
+      "AI Mode": "AI Rejimi",
+      "Close": "Yopish",
+      "Live Feed": "Jonli Efir",
+      "View Logs": "Jurnalni ko'rish",
+
+      "Main Entrance Gate": "Asosiy Kirish",
+      "Main Shaft Entrance": "Asosiy Shaxta Kirishi",
+      "Ventilation Shaft B": "Ventilyatsiya Shaxtasi B",
+      "Storage Area D1": "Omborxonasi D1",
+      "Detonator Store": "Detonator Ombori",
+      "Shaft Access": "Shaxtaga Kirish",
+      "Conveyor Belt A": "Konveyer Lenta A",
+      "Pump Station": "Nasos Stansiyasi",
+      "Service Gate": "Xizmat Ko'rsatish Eshigi",
+      "Fuel Storage": "Yoqilg'i Ombori",
+      "Transport Hub": "Transport Uzeli",
+
+      "PPE + Zone": "SHH + Zona",
+      "Fire + Smoke": "Olov + Tutun",
+      "PPE": "SHH",
+      "Zone": "Zona"
+    }
+  }
+};
+
+let currentLang = localStorage.getItem('safeguard_lang') || 'ru';
+
+function toggleLangMenu() {
+  document.getElementById('langSwitcher').classList.toggle('open');
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', (e) => {
+  const switcher = document.getElementById('langSwitcher');
+  if (switcher && !switcher.contains(e.target)) {
+    switcher.classList.remove('open');
+  }
+});
+
+function setLanguage(langCode, event) {
+  if (event) event.stopPropagation();
+
+  if (!DICTIONARY[langCode]) return;
+
+  currentLang = langCode;
+  localStorage.setItem('safeguard_lang', langCode);
+
+  // Update Switcher UI
+  const switcher = document.getElementById('langSwitcher');
+  switcher.querySelector('.lang-current .lang-flag').textContent = DICTIONARY[langCode].flag;
+  switcher.querySelector('.lang-current .lang-text').textContent = DICTIONARY[langCode].name;
+  switcher.classList.remove('open');
+
+  applyTranslations();
+}
+
+function applyTranslations() {
+  const dict = DICTIONARY[currentLang].strings;
+  const englishDict = DICTIONARY['en'].strings;
+
+  // 1. Translate Text Nodes (Very fast DOM traversal)
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+  let node;
+  while ((node = walker.nextNode())) {
+    let text = node.nodeValue.trim();
+    if (!text) continue;
+
+    // To translate from any language back to target language, we check if the text matches 
+    // ANY known translation, map it back to English key, then to target language.
+    let engKey = null;
+
+    // Check if it's already English
+    if (englishDict[text]) {
+      engKey = text;
+    } else {
+      // Find what English key this translated string belongs to
+      for (const [key, val] of Object.entries(DICTIONARY.ru.strings)) { if (val === text) engKey = key; }
+      if (!engKey) {
+        for (const [key, val] of Object.entries(DICTIONARY.uz.strings)) { if (val === text) engKey = key; }
+      }
+    }
+
+    if (engKey && dict[engKey]) {
+      node.nodeValue = node.nodeValue.replace(text, dict[engKey]);
+    }
+  }
+
+  // 2. Translate Placeholders (Inputs)
+  document.querySelectorAll('input[placeholder]').forEach(input => {
+    let text = input.getAttribute('placeholder');
+    let engKey = null;
+    if (englishDict[text]) engKey = text;
+    else {
+      for (const [key, val] of Object.entries(DICTIONARY.ru.strings)) { if (val === text) engKey = key; }
+      if (!engKey) {
+        for (const [key, val] of Object.entries(DICTIONARY.uz.strings)) { if (val === text) engKey = key; }
+      }
+    }
+    if (engKey && dict[engKey]) {
+      input.setAttribute('placeholder', dict[engKey]);
+    }
+  });
+}
+
+// Initialize on load
+window.addEventListener('DOMContentLoaded', () => {
+  setLanguage(currentLang);
+});

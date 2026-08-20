@@ -1,0 +1,34 @@
+import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
+import { LiveSession } from '../../database/entities/live-session.entity';
+import { Seminar } from '../../database/entities/seminar.entity';
+import { Recording } from '../../database/entities/recording.entity';
+import { Comment } from '../../database/entities/comment.entity';
+import { User } from '../../database/entities/user.entity';
+import { SavedSeminar } from '../../database/entities/saved-seminar.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { LiveGateway } from './live.gateway';
+import { UpdateLiveStateDto } from './dto/update-live-state.dto';
+import { CreateRecordingDto } from './dto/create-recording.dto';
+import { ApiResponse } from '../../common/response';
+import { Role } from '../../common/enums/role.enum';
+export declare class LiveService {
+    private readonly sessionRepo;
+    private readonly seminarRepo;
+    private readonly recordingRepo;
+    private readonly commentRepo;
+    private readonly userRepo;
+    private readonly savedRepo;
+    private readonly notificationsService;
+    private readonly config;
+    private readonly liveGateway?;
+    constructor(sessionRepo: Repository<LiveSession>, seminarRepo: Repository<Seminar>, recordingRepo: Repository<Recording>, commentRepo: Repository<Comment>, userRepo: Repository<User>, savedRepo: Repository<SavedSeminar>, notificationsService: NotificationsService, config: ConfigService, liveGateway?: LiveGateway | undefined);
+    startLiveSession(seminarId: string, userId: string, userRole: Role): Promise<ApiResponse>;
+    updateLiveState(seminarId: string, dto: UpdateLiveStateDto, userId: string, userRole: Role): Promise<ApiResponse>;
+    endLiveSession(seminarId: string, userId: string, userRole: Role): Promise<ApiResponse>;
+    generateLiveKitToken(seminarId: string, currentUser?: any): Promise<ApiResponse>;
+    addRecording(seminarId: string, dto: CreateRecordingDto, userId: string, userRole: Role): Promise<ApiResponse>;
+    getSession(seminarId: string): Promise<ApiResponse>;
+    getActiveSessions(): Promise<ApiResponse>;
+    private sendLiveStartedNotifications;
+}

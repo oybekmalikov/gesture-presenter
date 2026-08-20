@@ -1,0 +1,15 @@
+export { Department } from './department.entity';
+export { SubDepartment } from './sub-department.entity';
+export { Position } from './position.entity';
+export { User } from './user.entity';
+export { Seminar } from './seminar.entity';
+export { SeminarFile } from './seminar-file.entity';
+export { Tag } from './tag.entity';
+export { Like } from './like.entity';
+export { Comment } from './comment.entity';
+export { SavedSeminar } from './saved-seminar.entity';
+export { Notification } from './notification.entity';
+export { LiveSession } from './live-session.entity';
+export { Recording } from './recording.entity';
+export { AuditLog } from './audit-log.entity';
+export { SeminarViewLog } from './seminar-view-log.entity';

@@ -73,8 +73,27 @@ export class GestureProcessor {
 		return s.confirmedShape;
 	}
 
-	process(rawHands: RawHand[], now: number = performance.now()): GestureFrame {
-		const readings: HandReading[] = rawHands.map(h => {
+	process(rawHands: RawHand[], now: number = performance.now(), allowZoom: boolean = false): GestureFrame {
+		// Calculate bounding box area to find the closest hand(s)
+		const handsWithArea = rawHands.map(h => {
+			let minX = 1, maxX = 0, minY = 1, maxY = 0;
+			for (const p of h.landmarks) {
+				if (p.x < minX) minX = p.x;
+				if (p.x > maxX) maxX = p.x;
+				if (p.y < minY) minY = p.y;
+				if (p.y > maxY) maxY = p.y;
+			}
+			return { ...h, area: (maxX - minX) * (maxY - minY) };
+		});
+
+		// Sort by area descending (largest = closest to camera)
+		handsWithArea.sort((a, b) => b.area - a.area);
+		
+		// If zoom is allowed, we can use up to 2 hands, otherwise only 1
+		const maxHands = allowZoom ? 2 : 1;
+		const targetHands = handsWithArea.slice(0, maxHands);
+
+		const readings: HandReading[] = targetHands.map(h => {
 			const shape = this.confirmShape(
 				h.handedness,
 				classifyHandShape(h.landmarks),
@@ -98,7 +117,7 @@ export class GestureProcessor {
 		let action: PresentationAction = { type: 'idle' };
 		let label = labelFor('none', false);
 
-		if (readings.length === 2) {
+		if (allowZoom && readings.length === 2) {
 			const [a, b] = readings;
 			const d = Math.hypot(
 				a.palmCenter.x - b.palmCenter.x,

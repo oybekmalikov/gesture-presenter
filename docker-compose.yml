@@ -1,37 +1,36 @@
 version: '3.8'
 
 services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: okmk_presenter_backend
+  postgres:
+    image: postgres:16-alpine
+    container_name: okmk_postgres
     restart: always
     environment:
-      - PORT=5050
-      - ROOT_PASSWORD=${ROOT_PASSWORD:-okmk2026}
-      - STORAGE_PDF_DIR=./public/pdf
-      - STORAGE_GLB_DIR=./public/glb
-      - TEMP_DIR=./public/temp
+      POSTGRES_DB: okmk_seminar
+      POSTGRES_USER: okmk_user
+      POSTGRES_PASSWORD: okmk_dev_2026
     ports:
-      - "5050:5050"
+      - "5432:5432"
     volumes:
-      - ./backend/public:/app/public
+      - pgdata:/var/lib/postgresql/data
     networks:
       - okmk_network
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: okmk_presenter_frontend
+  redis:
+    image: redis:7-alpine
+    container_name: okmk_redis
     restart: always
+    command: redis-server --appendonly yes
     ports:
-      - "4664:80"
-    depends_on:
-      - backend
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
     networks:
       - okmk_network
+
+volumes:
+  pgdata:
+  redisdata:
 
 networks:
   okmk_network:
