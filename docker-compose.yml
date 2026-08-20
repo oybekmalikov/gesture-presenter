@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: okmk_user
       POSTGRES_PASSWORD: okmk_dev_2026
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
@@ -22,7 +22,7 @@ services:
     restart: always
     command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redisdata:/data
     networks:
@@ -34,6 +34,16 @@ services:
       dockerfile: Dockerfile
     container_name: okmk_backend
     restart: always
+    environment:
+      - PORT=5050
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=okmk_seminar
+      - DB_USER=okmk_user
+      - DB_PASSWORD=okmk_dev_2026
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     ports:
       - "5050:5050"
     depends_on:
