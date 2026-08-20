@@ -11,11 +11,30 @@ import {
   Tag,
 } from '../types';
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost:5050/api/v1';
+export function getApiBaseUrl(): string {
+  if (typeof window === 'undefined') return 'http://localhost:5050/api/v1';
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+
+  const pathname = window.location.pathname;
+  if (pathname.startsWith('/presenter')) {
+    return '/presenter/api/v1';
+  }
+  return '/api/v1';
+}
+
+export function getWsBaseUrl(): string {
+  if (typeof window === 'undefined') return 'http://localhost:5050';
+  if (import.meta.env.VITE_WS_URL) return import.meta.env.VITE_WS_URL;
+
+  const pathname = window.location.pathname;
+  if (pathname.startsWith('/presenter')) {
+    return `${window.location.origin}/presenter`;
+  }
+  return window.location.origin;
+}
 
 export const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getApiBaseUrl(),
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -50,7 +69,7 @@ apiClient.interceptors.response.use(
       if (refreshToken) {
         try {
           const res = await axios.post<ApiResponse<LoginResponse>>(
-            `${API_BASE_URL}/auth/refresh`,
+            `${getApiBaseUrl()}/auth/refresh`,
             { refreshToken },
           );
           if (res.data?.success && res.data.data?.accessToken) {
@@ -281,9 +300,9 @@ export const filesApi = {
     );
     return res.data;
   },
-  getViewUrl: (fileId: string) => `${API_BASE_URL}/files/${fileId}/view`,
+  getViewUrl: (fileId: string) => `${getApiBaseUrl()}/files/${fileId}/view`,
   getDownloadUrl: (fileId: string) =>
-    `${API_BASE_URL}/files/${fileId}/download`,
+    `${getApiBaseUrl()}/files/${fileId}/download`,
 };
 
 // ==================== INTERACTIONS SERVICE ====================

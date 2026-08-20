@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
-import { liveApi, seminarsApi, filesApi } from '../services/api';
+import { liveApi, seminarsApi, filesApi, getWsBaseUrl } from '../services/api';
 import { Seminar, SeminarFile } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { ThreeDViewer } from '../components/ThreeDViewer';
@@ -48,7 +48,7 @@ export const LiveSeminarPage: React.FC = () => {
       .catch(() => {});
 
     // Connect to /live WebSocket Gateway
-    const socketUrl = import.meta.env.VITE_WS_URL || 'http://localhost:5050';
+    const socketUrl = getWsBaseUrl();
     const socket = io(`${socketUrl}/live`, {
       transports: ['websocket', 'polling'],
       withCredentials: true,

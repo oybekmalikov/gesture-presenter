@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
-import { notificationsApi } from '../services/api';
+import { notificationsApi, getWsBaseUrl } from '../services/api';
 
 interface NotificationItem {
   id: string;
@@ -60,7 +60,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 
     fetchNotifications();
 
-    const socketUrl = import.meta.env.VITE_WS_URL || 'http://localhost:5050';
+    const socketUrl = getWsBaseUrl();
     let socket: Socket | null = null;
 
     try {
