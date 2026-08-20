@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Production builds
+dist/
+*/dist/
+build/
+*/build/
+
+# Environment files
+.env
+.env.*
+*.env
+!.env.example
+!*/.env.example
+
+# Temporary / Log files
+*.log
+logs/
+*/logs/
+temp/
+*/temp/
+*.tsbuildinfo
+
+# IDE / OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
