@@ -28,6 +28,33 @@ services:
     networks:
       - okmk_network
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: okmk_backend
+    restart: always
+    ports:
+      - "5050:5050"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - okmk_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: okmk_frontend
+    restart: always
+    ports:
+      - "4664:80"
+    depends_on:
+      - backend
+    networks:
+      - okmk_network
+
 volumes:
   pgdata:
   redisdata:
