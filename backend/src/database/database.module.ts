@@ -45,8 +45,8 @@ const ENTITIES = [
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: config.get<string>('database.host', 'localhost'),
-        port: config.get<number>('database.port', 5433),
+        host: config.get<string>('database.host', 'postgres'),
+        port: config.get<number>('database.port', 5432),
         username: config.get<string>('database.username', 'okmk_user'),
         password: config.get<string>('database.password', 'okmk_dev_2026'),
         database: config.get<string>('database.database', 'okmk_seminar'),
