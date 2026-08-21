@@ -59,7 +59,8 @@ services:
     container_name: okmk_frontend
     restart: always
     ports:
-      - "4664:80"
+      - "4664:443"
+      - "4665:80"
     depends_on:
       - backend
     networks:
