@@ -1,11 +1,8 @@
-// src/pages/StatisticsPage.tsx
 import React, { useEffect, useState } from 'react';
 import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
@@ -31,7 +28,7 @@ export const StatisticsPage: React.FC = () => {
 
   useEffect(() => {
     let mounted = true;
-    dashboardApi.getAdminDashboard()
+    dashboardApi.getStats()
       .then((res) => {
         if (mounted) setData(res);
       })
@@ -74,7 +71,6 @@ export const StatisticsPage: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Oylik Trend - Area Chart */}
             <div className="card" style={{ gridColumn: 'span 12' }}>
               <div className="card-header">
                 <div className="card-title">Yillik seminar dinamikasi</div>
@@ -84,8 +80,8 @@ export const StatisticsPage: React.FC = () => {
                   <AreaChart data={growthChartData}>
                     <defs>
                       <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--blue)" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="var(--blue)" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="var(--blue)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="var(--blue)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} vertical={false} />
@@ -107,7 +103,6 @@ export const StatisticsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Bo'limlar faolligi - Bar Chart */}
             <div className="card" style={{ gridColumn: 'span 8' }}>
               <div className="card-header">
                 <div className="card-title">{t('Department Activity')}</div>
@@ -137,7 +132,6 @@ export const StatisticsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Xotira va Fayllar - Pie Chart */}
             <div className="card" style={{ gridColumn: 'span 4' }}>
               <div className="card-header">
                 <div className="card-title">Fayllar taqsimoti</div>
@@ -172,7 +166,6 @@ export const StatisticsPage: React.FC = () => {
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-                {/* Legend Table */}
                 <div style={{ padding: '0 20px 20px' }}>
                   {storagePieData.slice(0, 4).map((s, idx) => (
                     <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, fontSize: 13 }}>
@@ -187,7 +180,6 @@ export const StatisticsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Popular Tags */}
             <div className="card" style={{ gridColumn: 'span 12' }}>
               <div className="card-header">
                 <div className="card-title">Ommabop teglar</div>

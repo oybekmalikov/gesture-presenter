@@ -1,12 +1,13 @@
-// src/pages/UserMgmtPage.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { usersApi, departmentsApi } from '../services/api';
 import { User, Role } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { useI18n } from '../utils/i18n';
 
 export const UserMgmtPage: React.FC = () => {
   const { user: currentUser } = useAuth();
+  const toast = useToast();
   const t = useI18n();
 
   const [users, setUsers] = useState<User[]>([]);
@@ -17,7 +18,6 @@ export const UserMgmtPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Add User Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [fio, setFio] = useState('');
   const [username, setUsername] = useState('');
@@ -53,7 +53,7 @@ export const UserMgmtPage: React.FC = () => {
       .then((res) => {
         if (Array.isArray(res)) setDepartmentsList(res);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleToggleActive = async (u: User) => {
@@ -62,8 +62,13 @@ export const UserMgmtPage: React.FC = () => {
       setUsers((prev) =>
         prev.map((item) => (item.id === u.id ? { ...item, isActive: updated.isActive } : item)),
       );
+      toast.success(
+        updated.isActive
+          ? `${u.fio} faollashtirildi`
+          : `${u.fio} faoliyati to'xtatildi`,
+      );
     } catch (e: any) {
-      setError(String(e));
+      toast.error("Holatni o'zgartirishda xatolik");
     }
   };
 
@@ -71,6 +76,7 @@ export const UserMgmtPage: React.FC = () => {
     e.preventDefault();
     if (!fio.trim() || !username.trim()) {
       setCreateError('F.I.O va login kiritilishi shart');
+      toast.warning('F.I.O va login kiritilishi shart');
       return;
     }
 
@@ -91,13 +97,16 @@ export const UserMgmtPage: React.FC = () => {
       setUsername('');
       setPassword('');
       setLavozim('');
+      toast.success("Yangi xodim muvaffaqiyatli qo'shildi");
       loadUsers();
     } catch (err: any) {
       const msg =
         err.response?.data?.message?.uz ||
         err.response?.data?.message ||
         'Xodim yaratishda xatolik yuz berdi';
-      setCreateError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      const errorText = typeof msg === 'string' ? msg : JSON.stringify(msg);
+      setCreateError(errorText);
+      toast.error(errorText);
     } finally {
       setCreateLoading(false);
     }
@@ -231,7 +240,6 @@ export const UserMgmtPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Add User Modal */}
       {isAddModalOpen && (
         <div
           className="camera-directory-overlay"

@@ -92,6 +92,29 @@ export class FilesService {
     return successResponse(saved, MESSAGES.FILE_UPLOADED);
   }
 
+  async uploadCoverImage(file: Express.Multer.File): Promise<ApiResponse> {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const validImageExts = ['.png', '.jpg', '.jpeg', '.webp', '.svg'];
+    if (!validImageExts.includes(ext)) {
+      this.safeUnlink(file.path);
+      return errorResponse({
+        uz: 'Faqat rasm formatlari (.png, .jpg, .jpeg, .webp, .svg) qabul qilinadi',
+        ru: 'Поддерживаются только форматы изображений (.png, .jpg, .jpeg, .webp, .svg)',
+      });
+    }
+
+    const relativeUrl = `/uploads/media/${file.filename}`;
+    return successResponse(
+      {
+        url: relativeUrl,
+        filename: file.filename,
+        originalName: file.originalname,
+        size: file.size,
+      },
+      MESSAGES.FILE_UPLOADED,
+    );
+  }
+
   async uploadMultipleSeminarFiles(
     seminarId: string,
     files: Express.Multer.File[],

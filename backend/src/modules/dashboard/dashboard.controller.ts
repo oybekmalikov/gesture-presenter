@@ -27,6 +27,12 @@ export class DashboardController {
     return this.dashboardService.getGuestDashboard();
   }
 
+  @Get('stats')
+  @UseGuards(OptionalJwtAuthGuard)
+  getEnterpriseStats(@CurrentUser() currentUser: any) {
+    return this.dashboardService.getAdminDashboard(currentUser);
+  }
+
   @Get('user')
   @UseGuards(JwtAuthGuard)
   getUserDashboard(@CurrentUser() currentUser: any) {

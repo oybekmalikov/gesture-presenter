@@ -11,6 +11,7 @@ import {
   NotificationType,
   FileAccess,
 } from '../../common/enums';
+import { NotificationsService } from './notifications.service';
 
 interface ReminderInterval {
   key: string;
@@ -64,6 +65,27 @@ const INTERVALS: ReminderInterval[] = [
     labelRu: 'остался 1 час',
   },
   {
+    key: '30m',
+    minMs: 25 * 60 * 1000,
+    maxMs: 35 * 60 * 1000,
+    labelUz: '30 daqiqa qoldi',
+    labelRu: 'осталось 30 минут',
+  },
+  {
+    key: '15m',
+    minMs: 10 * 60 * 1000,
+    maxMs: 20 * 60 * 1000,
+    labelUz: '15 daqiqa qoldi',
+    labelRu: 'осталось 15 минут',
+  },
+  {
+    key: '5m',
+    minMs: 2 * 60 * 1000,
+    maxMs: 7 * 60 * 1000,
+    labelUz: '5 daqiqa qoldi',
+    labelRu: 'осталось 5 минут',
+  },
+  {
     key: '1m',
     minMs: 0,
     maxMs: 2 * 60 * 1000,
@@ -85,6 +107,7 @@ export class ReminderSchedulerService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(SavedSeminar)
     private readonly savedRepo: Repository<SavedSeminar>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   @Cron(CronExpression.EVERY_MINUTE)
@@ -168,18 +191,17 @@ export class ReminderSchedulerService {
         .getOne();
 
       if (!existing) {
-        const notif = this.notifRepo.create({
+        await this.notificationsService.createNotification(
           userId,
-          type: NotificationType.SEMINAR_REMINDER,
-          title: `Seminar eslatmasi: ${interval.labelUz}`,
-          message: `"${seminar.title}" seminari boshlanishiga ${interval.labelUz}. Boshlanish vaqti: ${new Date(seminar.scheduledAt).toLocaleString()}`,
-          meta: {
+          NotificationType.SEMINAR_REMINDER,
+          `Seminar eslatmasi: ${interval.labelUz}`,
+          `"${seminar.title}" seminari boshlanishiga ${interval.labelUz}. Boshlanish vaqti: ${new Date(seminar.scheduledAt).toLocaleString()}`,
+          {
             seminarId: seminar.id,
             intervalKey: interval.key,
             scheduledAt: seminar.scheduledAt,
           },
-        });
-        await this.notifRepo.save(notif);
+        );
       }
     }
   }

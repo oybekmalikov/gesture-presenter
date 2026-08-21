@@ -45,4 +45,7 @@ export class Department {
 
   @OneToMany('User', 'department')
   users: any[];
+
+  @OneToMany('Seminar', 'department')
+  seminars: any[];
 }

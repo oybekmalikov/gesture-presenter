@@ -98,13 +98,74 @@
 }
 
 .card-body {
-  padding: 16px 18px;
+  padding: 18px 20px;
   flex: 1;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--r-md);
+  margin-top: 4px;
+}
+
+.tbl {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.tbl th {
+  padding: 12px 16px;
+  background: var(--bg-raised);
+  color: var(--text-sec);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.tbl td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.tbl tbody tr:hover td {
+  background: var(--bg-hover);
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text-sec);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tag-chip:hover, .tag-chip.active {
+  background: var(--blue-lt);
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(0) scale(0.8); opacity: 1; }
+  100% { transform: translateY(-160px) scale(1.3); opacity: 0; }
 }
 
 /* Form inputs & controls */
 .form-group {
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   width: 100%;
 }
 

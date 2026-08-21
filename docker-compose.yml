@@ -6,13 +6,18 @@ services:
     container_name: okmk_postgres
     restart: always
     environment:
-      POSTGRES_DB: okmk_seminar
-      POSTGRES_USER: okmk_user
-      POSTGRES_PASSWORD: okmk_dev_2026
+      POSTGRES_DB: ${DB_NAME:-okmk_seminar}
+      POSTGRES_USER: ${DB_USER:-okmk_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-okmk_prod_2026}
     ports:
-      - "5434:5432"
+      - "${DB_PORT_MAPPING:-5434:5432}"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-okmk_user} -d ${DB_NAME:-okmk_seminar}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - okmk_network
 
@@ -22,9 +27,14 @@ services:
     restart: always
     command: redis-server --appendonly yes
     ports:
-      - "6380:6379"
+      - "${REDIS_PORT_MAPPING:-6380:6379}"
     volumes:
       - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - okmk_network
 
@@ -39,16 +49,27 @@ services:
       - NODE_ENV=production
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_NAME=okmk_seminar
-      - DB_USER=okmk_user
-      - DB_PASSWORD=okmk_dev_2026
+      - DB_NAME=${DB_NAME:-okmk_seminar}
+      - DB_USER=${DB_USER:-okmk_user}
+      - DB_PASSWORD=${DB_PASSWORD:-okmk_prod_2026}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:-okmk_secret_jwt_key_prod_2026}
+      - JWT_ACCESS_EXPIRES_IN=30m
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - DEFAULT_SUPERADMIN_USERNAME=${DEFAULT_SUPERADMIN_USERNAME:-superadmin}
+      - DEFAULT_SUPERADMIN_PASSWORD=${DEFAULT_SUPERADMIN_PASSWORD:-superadmin2026}
+      - DEFAULT_ADMIN_USERNAME=${DEFAULT_ADMIN_USERNAME:-admin}
+      - DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:-admin2026}
+    volumes:
+      - uploads_data:/app/uploads
     ports:
       - "5050:5050"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - okmk_network
 
@@ -59,8 +80,8 @@ services:
     container_name: okmk_frontend
     restart: always
     ports:
-      - "4664:443"
-      - "4665:80"
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
     depends_on:
       - backend
     networks:
@@ -68,8 +89,13 @@ services:
 
 volumes:
   pgdata:
+    name: okmk_pgdata
   redisdata:
+    name: okmk_redisdata
+  uploads_data:
+    name: okmk_uploads_data
 
 networks:
   okmk_network:
+    name: okmk_network
     driver: bridge

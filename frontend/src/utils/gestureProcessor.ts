@@ -74,7 +74,6 @@ export class GestureProcessor {
 	}
 
 	process(rawHands: RawHand[], now: number = performance.now(), allowZoom: boolean = false): GestureFrame {
-		// Calculate bounding box area to find the closest hand(s)
 		const handsWithArea = rawHands.map(h => {
 			let minX = 1, maxX = 0, minY = 1, maxY = 0;
 			for (const p of h.landmarks) {
@@ -85,11 +84,7 @@ export class GestureProcessor {
 			}
 			return { ...h, area: (maxX - minX) * (maxY - minY) };
 		});
-
-		// Sort by area descending (largest = closest to camera)
 		handsWithArea.sort((a, b) => b.area - a.area);
-		
-		// If zoom is allowed, we can use up to 2 hands, otherwise only 1
 		const maxHands = allowZoom ? 2 : 1;
 		const targetHands = handsWithArea.slice(0, maxHands);
 

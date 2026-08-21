@@ -4,34 +4,49 @@ import { Seminar, FileAccess } from '../../types';
 import { useToast } from '../../context/ToastContext';
 import { useI18n } from '../../utils/i18n';
 
-interface CreateSeminarModalProps {
+interface EditSeminarModalProps {
+  seminar: Seminar;
   onClose: () => void;
-  onCreated: (seminar: Seminar) => void;
+  onUpdated: (seminar: Seminar) => void;
 }
 
-export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
+export const EditSeminarModal: React.FC<EditSeminarModalProps> = ({
+  seminar,
   onClose,
-  onCreated,
+  onUpdated,
 }) => {
   const toast = useToast();
   const t = useI18n();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [scheduledAt, setScheduledAt] = useState('');
-  const [accessScope, setAccessScope] = useState<'public' | 'restricted'>('public');
-  const [fileAccess, setFileAccess] = useState<FileAccess>(FileAccess.PUBLIC);
-  const [tagsInput, setTagsInput] = useState('');
-  const [targetUserId, setTargetUserId] = useState('');
-  const [departmentId, setDepartmentId] = useState('');
+  const [title, setTitle] = useState(seminar.title || '');
+  const [description, setDescription] = useState(seminar.description || '');
+  const [scheduledAt, setScheduledAt] = useState(
+    seminar.scheduledAt
+      ? new Date(seminar.scheduledAt).toISOString().slice(0, 16)
+      : '',
+  );
+  const [accessScope, setAccessScope] = useState<'public' | 'restricted'>(
+    seminar.fileAccess === FileAccess.PUBLIC ? 'public' : 'restricted',
+  );
+  const [fileAccess, setFileAccess] = useState<FileAccess>(
+    seminar.fileAccess || FileAccess.PUBLIC,
+  );
+  const [tagsInput, setTagsInput] = useState(
+    seminar.tags?.map((t) => `#${t.name}`).join(' ') || '',
+  );
+  const [targetUserId, setTargetUserId] = useState(seminar.targetUserId || '');
+  const [departmentId, setDepartmentId] = useState(seminar.departmentId || '');
 
-  // Cover Image (Point 6)
+  // Cover Image
+  const [coverImageUrl, setCoverImageUrl] = useState(seminar.coverImageUrl || '');
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
-  const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
+  const [coverImagePreview, setCoverImagePreview] = useState<string | null>(
+    seminar.coverImageUrl || null,
+  );
   const coverInputRef = useRef<HTMLInputElement>(null);
 
-  // Attached files
-  const [files, setFiles] = useState<File[]>([]);
+  // New attached files
+  const [newFiles, setNewFiles] = useState<File[]>([]);
   const [usersList, setUsersList] = useState<{ id: string; fio: string; lavozim?: string }[]>([]);
   const [departmentsList, setDepartmentsList] = useState<{ id: string; name: string }[]>([]);
 
@@ -62,15 +77,11 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNewFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selected = Array.from(e.target.files);
-      setFiles((prev) => [...prev, ...selected]);
+      setNewFiles((prev) => [...prev, ...selected]);
     }
-  };
-
-  const removeSelectedFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,10 +95,10 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
     setError(null);
 
     try {
-      let uploadedCoverUrl: string | undefined = undefined;
+      let finalCoverUrl = coverImageUrl;
       if (coverImageFile) {
         const coverRes = await filesApi.uploadCover(coverImageFile);
-        uploadedCoverUrl = coverRes.url;
+        finalCoverUrl = coverRes.url;
       }
 
       const rawTags = tagsInput
@@ -102,10 +113,10 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
             ? FileAccess.READABLE
             : fileAccess;
 
-      const createdSeminar = await seminarsApi.create({
+      const updated = await seminarsApi.update(seminar.id, {
         title: title.trim(),
         description: description.trim() || undefined,
-        coverImageUrl: uploadedCoverUrl,
+        coverImageUrl: finalCoverUrl || undefined,
         scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
         fileAccess: effectiveFileAccess,
         tags: rawTags,
@@ -113,19 +124,19 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
         departmentId: departmentId || undefined,
       });
 
-      // Upload attached presentation & 3D files if any
-      if (files.length > 0 && createdSeminar?.id) {
-        await filesApi.uploadMultiple(createdSeminar.id, files);
+      // Upload newly added files if any
+      if (newFiles.length > 0) {
+        await filesApi.uploadMultiple(seminar.id, newFiles);
       }
 
-      onCreated(createdSeminar);
-      toast.success('Seminar muvaffaqiyatli yaratildi');
+      onUpdated(updated);
+      toast.success('Seminar muvaffaqiyatli yangilandi');
       onClose();
     } catch (err: any) {
       const msg =
         err.response?.data?.message?.uz ||
         err.response?.data?.message ||
-        'Seminar yaratishda xatolik yuz berdi';
+        'Seminarni tahrirlashda xatolik yuz berdi';
       const errorText = typeof msg === 'string' ? msg : JSON.stringify(msg);
       setError(errorText);
       toast.error(errorText);
@@ -166,8 +177,8 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
       >
         <div className="card-header" style={{ padding: '16px 20px' }}>
           <div>
-            <div className="card-title" style={{ fontSize: 16 }}>{t('Create Seminar')}</div>
-            <div className="card-subtitle">Yangi taqdimot, muqova rasmi va 3D model biriktirish</div>
+            <div className="card-title" style={{ fontSize: 16 }}>Seminarni tahrirlash</div>
+            <div className="card-subtitle">Sarlavha, tavsif, muqova va ochiqlik parametrlarini yangilash</div>
           </div>
           <button type="button" className="btn-icon" onClick={onClose}>
             ✕
@@ -190,22 +201,21 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
 
         <div className="card-body" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           <form onSubmit={handleSubmit}>
-            {/* 1. Title & Cover Image Row */}
+            {/* Title */}
             <div className="form-group" style={{ marginBottom: 16 }}>
-              <label className="form-label">Seminar nomi (Sarlavha) *</label>
+              <label className="form-label">Seminar nomi *</label>
               <input
                 type="text"
                 className="form-input"
-                placeholder="Masalan: MBF texnologik liniyasini modernizatsiya qilish loyihasi"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
               />
             </div>
 
-            {/* 2. Cover / Title Image (Point 6) */}
+            {/* Cover Image */}
             <div className="form-group" style={{ marginBottom: 16 }}>
-              <label className="form-label">Seminar muqova rasmi (Title / Cover image)</label>
+              <label className="form-label">Seminar muqova rasmi (Cover image)</label>
               <div
                 style={{
                   display: 'flex',
@@ -239,6 +249,7 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
                       onClick={() => {
                         setCoverImageFile(null);
                         setCoverImagePreview(null);
+                        setCoverImageUrl('');
                       }}
                       style={{
                         position: 'absolute',
@@ -298,30 +309,26 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
                     className="btn btn-ghost btn-sm"
                     onClick={() => coverInputRef.current?.click()}
                   >
-                    📷 Muqova rasmini yuklash (.jpg, .png, .webp)
+                    📷 Yangi muqova rasmi yuklash
                   </button>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                    Karta va taqdimot sarlavhasida chiroyli ko'rinadi (Tavsiya: 16:9)
-                  </div>
                 </div>
               </div>
             </div>
 
-            {/* 3. Description */}
+            {/* Description */}
             <div className="form-group" style={{ marginBottom: 16 }}>
               <label className="form-label">Tavsif</label>
               <textarea
                 className="form-input"
-                rows={2}
-                placeholder="Seminar maqsadi va asosiy fikrlari..."
+                rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
 
-            {/* 4. Access Scope Selection (Point 7: Barcha uchun yoki Tanlanganlar uchun) */}
+            {/* Access Scope */}
             <div className="form-group" style={{ marginBottom: 16 }}>
-              <label className="form-label">Seminar ochiqlik doirasi (Kimlar uchun) *</label>
+              <label className="form-label">Seminar ochiqlik doirasi *</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 4 }}>
                 <div
                   onClick={() => {
@@ -337,11 +344,11 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
                     transition: 'all 0.15s',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12, color: 'var(--text-pri)' }}>
-                    <span>🌐</span> Barcha uchun ochiq
+                  <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-pri)' }}>
+                    🌐 Barcha uchun ochiq
                   </div>
                   <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 4 }}>
-                    OKMK korxonasining barcha xodimlari ko'ra oladi
+                    Barcha xodimlar ko'ra oladi
                   </div>
                 </div>
 
@@ -359,17 +366,17 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
                     transition: 'all 0.15s',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 12, color: 'var(--text-pri)' }}>
-                    <span>🔒</span> Faqat tanlangan odamlar uchun
+                  <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-pri)' }}>
+                    🔒 Faqat tanlangan odamlar uchun
                   </div>
                   <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 4 }}>
-                    Faqat belgilangan shaxs yoki bo'lim a'zolari ko'radi
+                    Faqat belgilangan shaxs yoki bo'lim ko'radi
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* 5. Date & Target Users / Department */}
+            {/* Date & Department */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
               <div className="form-group">
                 <label className="form-label">O'tkazilish sanasi va vaqti</label>
@@ -379,9 +386,6 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
                   value={scheduledAt}
                   onChange={(e) => setScheduledAt(e.target.value)}
                 />
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>
-                  Yaqin vaqt belgilansa, darhol eslatma yuboriladi
-                </div>
               </div>
 
               <div className="form-group">
@@ -403,12 +407,11 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
 
             {accessScope === 'restricted' && (
               <div className="form-group" style={{ marginBottom: 16 }}>
-                <label className="form-label">Mo'ljallangan xodim (Target User) *</label>
+                <label className="form-label">Mo'ljallangan xodim (Target User)</label>
                 <select
                   className="form-input"
                   value={targetUserId}
                   onChange={(e) => setTargetUserId(e.target.value)}
-                  required={accessScope === 'restricted' && !departmentId}
                 >
                   <option value="">Xodimni tanlang...</option>
                   {usersList.map((u) => (
@@ -420,82 +423,35 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
               </div>
             )}
 
-            {/* 6. Tags */}
+            {/* Tags */}
             <div className="form-group" style={{ marginBottom: 16 }}>
-              <label className="form-label">Teglar (vergul yoki bo'sh joy bilan)</label>
+              <label className="form-label">Teglar</label>
               <input
                 type="text"
                 className="form-input"
-                placeholder="masalan: #mbf #xavfsizlik #3d #avtomatlashtirish"
                 value={tagsInput}
                 onChange={(e) => setTagsInput(e.target.value)}
               />
             </div>
 
-            {/* 7. File Upload Section */}
+            {/* Additional Files Upload */}
             <div className="form-group" style={{ marginBottom: 18 }}>
-              <label className="form-label">Fayllar biriktirish (.pdf, .pptx, .step, .glb, video)</label>
-              <div
-                style={{
-                  border: '1.5px dashed var(--border)',
-                  borderRadius: 'var(--r-md)',
-                  padding: 16,
-                  textAlign: 'center',
-                  background: 'var(--bg-raised)',
-                }}
-              >
-                <label className="btn btn-ghost btn-sm" style={{ cursor: 'pointer', display: 'inline-block' }}>
-                  📂 Taqdimot yoki 3D fayl tanlash
-                  <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.pptx,.ppt,.step,.stp,.glb,.gltf,.mp4,.webm"
-                    onChange={handleFileChange}
-                    style={{ display: 'none' }}
-                  />
-                </label>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
-                  PDF/PPTX: maks 50MB · 3D STEP/GLB: maks 100MB
-                </div>
-              </div>
-
-              {files.length > 0 && (
-                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {files.map((f, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '8px 12px',
-                        borderRadius: 'var(--r-sm)',
-                        background: 'var(--bg-surface)',
-                        border: '1px solid var(--border)',
-                        fontSize: 12,
-                      }}
-                    >
-                      <span style={{ fontWeight: 600 }}>{f.name}</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontFamily: 'var(--f-mono)', color: 'var(--text-muted)' }}>
-                          {(f.size / (1024 * 1024)).toFixed(1)} MB
-                        </span>
-                        <button
-                          type="button"
-                          className="btn-icon"
-                          style={{ width: 22, height: 22, color: 'var(--red)' }}
-                          onClick={() => removeSelectedFile(idx)}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+              <label className="form-label">Yangi fayl qo'shish (.pdf, .pptx, .step, .glb)</label>
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.pptx,.ppt,.step,.stp,.glb,.gltf,.mp4,.webm"
+                onChange={handleNewFileChange}
+                className="form-input"
+              />
+              {newFiles.length > 0 && (
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                  {newFiles.length} ta yangi fayl biriktiriladi
                 </div>
               )}
             </div>
 
-            {/* Footer Buttons */}
+            {/* Actions */}
             <div
               style={{
                 display: 'flex',
@@ -509,7 +465,7 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
                 {t('Cancel')}
               </button>
               <button type="submit" className="btn btn-primary" disabled={loading}>
-                {loading ? t('Loading') : 'Saqlash va Yaratish'}
+                {loading ? t('Loading') : "O'zgarishlarni saqlash"}
               </button>
             </div>
           </form>
@@ -519,4 +475,4 @@ export const CreateSeminarModal: React.FC<CreateSeminarModalProps> = ({
   );
 };
 
-export default CreateSeminarModal;
+export default EditSeminarModal;

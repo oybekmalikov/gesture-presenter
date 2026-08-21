@@ -46,6 +46,10 @@ export class UpdateSeminarDto {
   @IsOptional()
   isRecorded?: boolean;
 
+  @IsString()
+  @IsOptional()
+  coverImageUrl?: string;
+
   @IsArray()
   @IsString({ each: true })
   @IsOptional()

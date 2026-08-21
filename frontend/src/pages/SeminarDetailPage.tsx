@@ -1,21 +1,25 @@
-// src/pages/SeminarDetailPage.tsx
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   seminarsApi,
   interactionsApi,
   filesApi,
+  liveApi,
 } from '../services/api';
 import { Seminar, SeminarFile, CommentItem, SeminarStatus } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { ThreeDViewer } from '../components/ThreeDViewer';
 import { InteractivePresentation } from '../components/InteractivePresentation';
+import { EditSeminarModal } from '../components/seminars/EditSeminarModal';
+import { ConfirmModal } from '../components/common/ConfirmModal';
 import { useI18n } from '../utils/i18n';
+import { Bookmark, BookmarkCheck, MonitorX, Pen, Send, SendIcon, ThumbsUp } from 'lucide-react';
 
 export const SeminarDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isAdmin, isSuperadmin } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const t = useI18n();
 
@@ -29,6 +33,29 @@ export const SeminarDetailPage: React.FC = () => {
   const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
+  const [startingLive, setStartingLive] = useState(false);
+
+  const isAuthor = Boolean(
+    isAuthenticated && user?.id && (seminar?.authorId === user?.id || seminar?.author?.id === user?.id),
+  );
+  const isCompleted = Boolean(
+    seminar?.status === SeminarStatus.COMPLETED || seminar?.isRecorded,
+  );
+
+  const handleStartLive = async () => {
+    if (!seminar) return;
+    setStartingLive(true);
+    try {
+      await liveApi.startSession(seminar.id);
+      toast.success("Jonli efir boshlandi!");
+    } catch { }
+    finally {
+      setStartingLive(false);
+      navigate(`/live/${seminar.id}`);
+    }
+  };
 
   const loadData = async () => {
     if (!id) return;
@@ -44,11 +71,15 @@ export const SeminarDetailPage: React.FC = () => {
       setIsSaved(Boolean(semRes.isSaved));
       setComments(commRes || []);
 
-      // Auto-select first viewable presentation or 3D file
+      // Auto-select first viewable presentation, 3D file or video recording
       if (semRes.files && semRes.files.length > 0) {
         const defaultFile =
           semRes.files.find(
-            (f) => f.fileType === 'pdf' || f.fileType === '3d' || f.fileType === 'presentation',
+            (f) =>
+              f.fileType === 'pdf' ||
+              f.fileType === '3d' ||
+              f.fileType === 'video' ||
+              f.fileType === 'presentation',
           ) || semRes.files[0];
         setActiveViewerFile(defaultFile);
       }
@@ -68,6 +99,7 @@ export const SeminarDetailPage: React.FC = () => {
       const res = await interactionsApi.toggleLike(id);
       setIsLiked(res.liked);
       setLikeCount(res.likesCount);
+      toast.success(res.liked ? "Taqdimotga layk bosildi" : "Layk bekor qilindi");
     } catch { }
   };
 
@@ -76,6 +108,7 @@ export const SeminarDetailPage: React.FC = () => {
     try {
       const res = await seminarsApi.toggleBookmark(id);
       setIsSaved(res.isSaved);
+      toast.success(res.isSaved ? "Seminar saqlab qo'yildi" : "Saqlanganlardan olib tashlandi");
     } catch { }
   };
 
@@ -93,18 +126,22 @@ export const SeminarDetailPage: React.FC = () => {
       setReplyParentId(null);
       const updatedComments = await interactionsApi.getComments(id);
       setComments(updatedComments || []);
+      toast.success("Izohingiz qo'shildi");
     } catch { }
   };
 
-  const handleDeleteComment = async (commentId: string) => {
-    if (window.confirm("Izohni o'chirmoqchimisiz?")) {
-      try {
-        await interactionsApi.removeComment(commentId);
-        if (id) {
-          const updated = await interactionsApi.getComments(id);
-          setComments(updated || []);
-        }
-      } catch { }
+  const handleDeleteCommentConfirm = async () => {
+    if (!deleteCommentId) return;
+    try {
+      await interactionsApi.removeComment(deleteCommentId);
+      if (id) {
+        const updated = await interactionsApi.getComments(id);
+        setComments(updated || []);
+      }
+      toast.success("Izoh o'chirildi");
+    } catch { }
+    finally {
+      setDeleteCommentId(null);
     }
   };
 
@@ -140,18 +177,21 @@ export const SeminarDetailPage: React.FC = () => {
     activeViewerFile?.fileType === '3d' ||
     activeViewerFile?.originalName?.match(/\.(step|stp|glb|gltf)$/i);
 
+  const isVideoActive =
+    activeViewerFile?.fileType === 'video' ||
+    activeViewerFile?.originalName?.match(/\.(mp4|webm|mkv|mov)$/i);
+
   const isLive = seminar.isLive || seminar.status === SeminarStatus.LIVE;
 
   return (
     <div className="page active" id="page-seminar-detail">
-      {/* Top Header */}
       <div className="page-hd">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
             <span
               className={`badge ${isLive ? 'badge-red' : seminar.status === SeminarStatus.SCHEDULED ? 'badge-blue' : 'badge-slate'}`}
             >
-              {isLive ? t('Live Now') : seminar.status === SeminarStatus.SCHEDULED ? t('Scheduled') : t('Completed')}
+              {isLive ? t('Live Now') : seminar.status === SeminarStatus.SCHEDULED ? t('Scheduled') : t('Draft Seminars')}
             </span>
             <span className="badge badge-slate" style={{ textTransform: 'uppercase' }}>
               {seminar.fileAccess}
@@ -164,13 +204,54 @@ export const SeminarDetailPage: React.FC = () => {
         </div>
 
         <div className="card-actions">
-          {isLive && (
+          {isLive ? (
             <button
               type="button"
               className="btn btn-danger btn-sm"
+              style={{ display: 'flex', alignItems: 'center', gap: 6, animation: 'pulse 1.5s infinite' }}
               onClick={() => navigate(`/live/${seminar.id}`)}
             >
-              🔴 {t('Join Live')}
+              <span>{isAuthor ? "🔴" : "🟢"}</span>
+              <span>{isAuthor ? "Efirni boshqarish" : "Jonli efirga qo'shilish"}</span>
+            </button>
+          ) : (
+            !isCompleted && isAuthor && (
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                  border: '1px solid #b91c1c',
+                  boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
+                }}
+                disabled={startingLive}
+                onClick={handleStartLive}
+              >
+                <span>🔴</span>
+                <span>{startingLive ? "Boshlanmoqda..." : "Jonli efirni boshlash"}</span>
+              </button>
+            )
+          )}
+
+          {isCompleted && (
+            <span
+              className="badge badge-slate"
+              style={{ padding: '6px 12px', fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+            >
+              <MonitorX size={16} color="#ffff" /> {seminar.isRecorded ? "Efir yakunlangan (Video yozuv mavjud)" : "Seminar yakunlangan"}
+            </span>
+          )}
+
+          {isAuthor && !isCompleted && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setIsEditModalOpen(true)}
+            >
+              <Pen size={16} color="#ffff" />
             </button>
           )}
 
@@ -181,14 +262,14 @@ export const SeminarDetailPage: React.FC = () => {
                 className={`btn ${isLiked ? 'btn-danger' : 'btn-ghost'} btn-sm`}
                 onClick={handleToggleLike}
               >
-                👍 {likeCount}
+                <ThumbsUp /> {likeCount}
               </button>
               <button
                 type="button"
                 className={`btn ${isSaved ? 'btn-primary' : 'btn-ghost'} btn-sm`}
                 onClick={handleToggleBookmark}
               >
-                {isSaved ? '✓ Saqlangan' : '🔖 Saqlash'}
+                {isSaved ? <BookmarkCheck /> : <Bookmark />}
               </button>
             </>
           )}
@@ -196,7 +277,6 @@ export const SeminarDetailPage: React.FC = () => {
       </div>
 
       <div className="main-grid">
-        {/* Main Presentation / 3D Viewer Area */}
         <div className="card" style={{ gridColumn: 'span 8', minHeight: 520, display: 'flex', flexDirection: 'column' }}>
           <div className="card-header">
             <div>
@@ -220,7 +300,35 @@ export const SeminarDetailPage: React.FC = () => {
 
           <div className="card-body" style={{ flex: 1, position: 'relative', minHeight: 440, background: '#0b0f19' }}>
             {activeViewerFile ? (
-              is3DActive ? (
+              isVideoActive ? (
+                <div
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: '#050811',
+                    padding: 10,
+                  }}
+                >
+                  <video
+                    controls
+                    playsInline
+                    src={filesApi.getViewUrl(activeViewerFile.id)}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: 460,
+                      borderRadius: 10,
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                    }}
+                  />
+                  <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-muted)' }}>
+                    📹 Jonli efirda yozib olingan video yozuvi ({activeViewerFile.originalName})
+                  </div>
+                </div>
+              ) : is3DActive ? (
                 <ThreeDViewer
                   modelUrl={filesApi.getViewUrl(activeViewerFile.id)}
                   modelName={activeViewerFile.originalName}
@@ -240,7 +348,6 @@ export const SeminarDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Seminar Details & Files List Side Card */}
         <div className="card" style={{ gridColumn: 'span 4' }}>
           <div className="card-header">
             <div>
@@ -288,7 +395,6 @@ export const SeminarDetailPage: React.FC = () => {
               <div className="empty-state">Fayllar yuklanmagan</div>
             )}
 
-            {/* Description */}
             {seminar.description && (
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6, color: 'var(--text-pri)' }}>
@@ -302,7 +408,6 @@ export const SeminarDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Comments Section */}
         <div className="card" style={{ gridColumn: 'span 12' }}>
           <div className="card-header">
             <div>
@@ -323,7 +428,7 @@ export const SeminarDetailPage: React.FC = () => {
                     required
                   />
                   <button type="submit" className="btn btn-primary btn-sm">
-                    Yuborish
+                    <Send />
                   </button>
                 </div>
               </form>
@@ -365,7 +470,7 @@ export const SeminarDetailPage: React.FC = () => {
                             type="button"
                             className="btn-icon"
                             style={{ width: 20, height: 20, color: 'var(--red)', fontSize: 11 }}
-                            onClick={() => handleDeleteComment(comm.id)}
+                            onClick={() => setDeleteCommentId(comm.id)}
                             title="O'chirish"
                           >
                             ✕
@@ -383,6 +488,30 @@ export const SeminarDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {isEditModalOpen && seminar && (
+        <EditSeminarModal
+          seminar={seminar}
+          onClose={() => setIsEditModalOpen(false)}
+          onUpdated={(updated) => {
+            setSeminar(updated);
+            setIsEditModalOpen(false);
+          }}
+        />
+      )}
+
+      {deleteCommentId && (
+        <ConfirmModal
+          open={Boolean(deleteCommentId)}
+          title="Izohni o'chirish"
+          message="Haqiqatan ham ushbu izohni o'chirmoqchimisiz?"
+          confirmText="O'chirish"
+          cancelText="Bekor qilish"
+          variant="danger"
+          onConfirm={handleDeleteCommentConfirm}
+          onCancel={() => setDeleteCommentId(null)}
+        />
+      )}
     </div>
   );
 };

@@ -1,5 +1,3 @@
-// src/utils/i18n.ts
-
 export const LANGUAGES = [
   { code: 'uz', name: "O'zbekcha" },
   { code: 'ru', name: 'Русский' },
@@ -7,7 +5,6 @@ export const LANGUAGES = [
 
 export const translations = {
   ru: {
-    // Navigation & Groups
     Monitoring: 'Мониторинг',
     Management: 'Управление',
     System: 'Система',
@@ -26,13 +23,11 @@ export const translations = {
     Logout: 'Выйти',
     'Sign In': 'Войти',
 
-    // Topbar & Branding
     'Platform PPE Control': 'Корпоративная платформа презентаций и семинаров',
     'Search seminars, tags, topics': 'Поиск семинаров, тем или тегов...',
     Notifications: 'Уведомления',
     'No notifications': 'Нет новых уведомлений',
 
-    // Dashboard Cards & Stats
     'Active Live Streams': 'Прямые трансляции',
     'Live Streams': 'Прямые трансляции',
     'Total Seminars': 'Всего семинаров',
@@ -66,7 +61,6 @@ export const translations = {
     'Create Seminar': 'Создать семинар',
     'New Seminar': 'Новый семинар',
 
-    // Common UI
     Time: 'Время',
     User: 'Пользователь',
     Action: 'Действие',
@@ -110,7 +104,6 @@ export const translations = {
     'Days Remaining': 'Дней до удаления',
   },
   uz: {
-    // Navigation & Groups
     Monitoring: 'Monitoring',
     Management: 'Boshqaruv',
     System: 'Tizim',
@@ -129,13 +122,11 @@ export const translations = {
     Logout: 'Chiqish',
     'Sign In': 'Kirish',
 
-    // Topbar & Branding
     'Platform PPE Control': 'Korporativ taqdimot va seminar platformasi',
     'Search seminars, tags, topics': 'Seminar nomi, mavzu yoki teglar qidiruvi...',
     Notifications: 'Bildirishnomalar',
     'No notifications': 'Yangi bildirishnomalar yo`q',
 
-    // Dashboard Cards & Stats
     'Active Live Streams': 'Jonli efirlar',
     'Live Streams': 'Jonli efirlar',
     'Total Seminars': 'Jami seminarlar',
@@ -169,7 +160,6 @@ export const translations = {
     'Create Seminar': 'Seminar yaratish',
     'New Seminar': 'Yangi seminar',
 
-    // Common UI
     Time: 'Vaqt',
     User: 'Foydalanuvchi',
     Action: 'Harakat',

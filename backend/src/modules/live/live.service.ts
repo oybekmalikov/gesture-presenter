@@ -61,12 +61,15 @@ export class LiveService {
       return errorResponse(MESSAGES.SEMINAR_NOT_FOUND);
     }
 
-    if (
-      seminar.authorId !== userId &&
-      userRole !== Role.ADMIN &&
-      userRole !== Role.SUPERADMIN
-    ) {
+    if (seminar.authorId !== userId) {
       return errorResponse(MESSAGES.FORBIDDEN);
+    }
+
+    if (seminar.status === SeminarStatus.COMPLETED || seminar.isRecorded) {
+      return errorResponse({
+        uz: 'Ushbu seminar allaqachon yakunlangan. Qayta jonli efir boshlash mumkin emas.',
+        ru: 'Этот семинар уже завершён. Повторный прямой эфир невозможен.',
+      });
     }
 
     // Check if there is already an active session

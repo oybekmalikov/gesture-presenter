@@ -47,7 +47,7 @@ export class Seminar {
   @Column({ nullable: true })
   departmentId: string;
 
-  @ManyToOne(() => Department, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => Department, (d) => d.seminars, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'departmentId' })
   department: Department;
 

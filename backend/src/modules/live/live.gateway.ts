@@ -11,12 +11,27 @@ import {
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 
+export interface ParticipantInfo {
+  socketId: string;
+  userId?: string;
+  username: string;
+  avatarUrl?: string;
+  role?: string;
+  isPresenter: boolean;
+  audioEnabled: boolean;
+  videoEnabled: boolean;
+  joinedAt: string;
+}
+
 export interface JoinRoomPayload {
   seminarId: string;
   userId?: string;
   username?: string;
   avatarUrl?: string;
   role?: string;
+  isPresenter?: boolean;
+  audioEnabled?: boolean;
+  videoEnabled?: boolean;
 }
 
 export interface ChatMessagePayload {
@@ -62,6 +77,15 @@ export interface LaserPointerPayload {
   color?: string;
 }
 
+export interface WebRTCSignalPayload {
+  targetSocketId: string;
+  callerSocketId?: string;
+  signal?: any;
+  candidate?: any;
+  offer?: any;
+  answer?: any;
+}
+
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -77,20 +101,14 @@ export class LiveGateway
 
   private readonly logger = new Logger(LiveGateway.name);
 
-  /** seminarId -> Set of socket IDs */
-  private readonly roomParticipants = new Map<string, Set<string>>();
+  /** seminarId -> Map<socketId, ParticipantInfo> */
+  private readonly roomParticipants = new Map<string, Map<string, ParticipantInfo>>();
 
-  /** socketId -> User and Room metadata */
-  private readonly socketUserMap = new Map<
-    string,
-    {
-      seminarId: string;
-      userId?: string;
-      username?: string;
-      avatarUrl?: string;
-      role?: string;
-    }
-  >();
+  /** socketId -> seminarId */
+  private readonly socketRoomMap = new Map<string, string>();
+
+  /** seminarId -> Current Active File ID */
+  private readonly roomActiveFile = new Map<string, string>();
 
   /** seminarId -> Current Slide State Cache */
   private readonly roomSlideState = new Map<string, SlideSyncPayload>();
@@ -107,11 +125,10 @@ export class LiveGateway
   }
 
   handleDisconnect(client: Socket) {
-    const userInfo = this.socketUserMap.get(client.id);
-    if (userInfo) {
-      const { seminarId, username } = userInfo;
-      this.leaveSeminarRoom(client, seminarId, username);
-      this.socketUserMap.delete(client.id);
+    const seminarId = this.socketRoomMap.get(client.id);
+    if (seminarId) {
+      this.leaveSeminarRoom(client, seminarId);
+      this.socketRoomMap.delete(client.id);
     }
     this.logger.debug(`Client disconnected from /live: ${client.id}`);
   }
@@ -121,62 +138,76 @@ export class LiveGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: JoinRoomPayload,
   ) {
-    const { seminarId, userId, username, avatarUrl, role } = payload;
+    const {
+      seminarId,
+      userId,
+      username,
+      avatarUrl,
+      role,
+      isPresenter,
+      audioEnabled,
+      videoEnabled,
+    } = payload;
     if (!seminarId) return;
 
     const roomName = `seminar_${seminarId}`;
     client.join(roomName);
+    this.socketRoomMap.set(client.id, seminarId);
 
-    // Save mapping
-    this.socketUserMap.set(client.id, {
-      seminarId,
+    const participant: ParticipantInfo = {
+      socketId: client.id,
       userId,
       username: username || 'Mehmon',
       avatarUrl,
-      role,
+      role: role || 'user',
+      isPresenter: Boolean(isPresenter),
+      audioEnabled: audioEnabled !== false,
+      videoEnabled: videoEnabled !== false,
+      joinedAt: new Date().toISOString(),
+    };
+
+    if (!this.roomParticipants.has(seminarId)) {
+      this.roomParticipants.set(seminarId, new Map());
+    }
+    const participantsMap = this.roomParticipants.get(seminarId)!;
+
+    // Get list of existing participants BEFORE adding new one (to send to joining user)
+    const existingParticipants = Array.from(participantsMap.values());
+
+    // Add new participant
+    participantsMap.set(client.id, participant);
+    const viewerCount = participantsMap.size;
+
+    // 1. Send existing participants list & state to the new participant
+    const cachedSlide = this.roomSlideState.get(seminarId);
+    const cached3d = this.room3dState.get(seminarId);
+    const activeFileId = this.roomActiveFile.get(seminarId);
+
+    client.emit('room_participants', {
+      participants: existingParticipants,
+      self: participant,
+      currentSlide: cachedSlide || null,
+      current3dState: cached3d || null,
+      activeFileId: activeFileId || null,
     });
 
-    // Update room participants set
-    if (!this.roomParticipants.has(seminarId)) {
-      this.roomParticipants.set(seminarId, new Set());
-    }
-    this.roomParticipants.get(seminarId)!.add(client.id);
+    // 2. Notify other room participants about the new user
+    client.to(roomName).emit('user_joined', participant);
 
-    const viewerCount = this.roomParticipants.get(seminarId)!.size;
-
-    // Notify room about updated count
+    // 3. Notify room about updated count
     this.server.to(roomName).emit('viewer_count_updated', {
       seminarId,
       viewerCount,
     });
 
-    // Notify others about user join
-    client.to(roomName).emit('user_joined', {
-      userId,
-      username: username || 'Mehmon',
-      avatarUrl,
-      role,
-      joinedAt: new Date().toISOString(),
-    });
-
-    // Send cached current slide / 3D state to newly connected client
-    const cachedSlide = this.roomSlideState.get(seminarId);
-    if (cachedSlide) {
-      client.emit('slide_changed', cachedSlide);
-    }
-
-    const cached3d = this.room3dState.get(seminarId);
-    if (cached3d) {
-      client.emit('3d_state_changed', cached3d);
-    }
-
     this.logger.log(
-      `👤 User "${username || 'Mehmon'}" joined room "${roomName}" (Total: ${viewerCount})`,
+      `👤 User "${participant.username}" (${participant.isPresenter ? 'PRESENTER' : 'VIEWER'}) joined room "${roomName}" (Total: ${viewerCount})`,
     );
 
     return {
       success: true,
       viewerCount,
+      participant,
       currentSlide: cachedSlide || null,
       current3dState: cached3d || null,
     };
@@ -185,15 +216,172 @@ export class LiveGateway
   @SubscribeMessage('leave_room')
   handleLeaveRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { seminarId: string },
+    @MessageBody() payload: { seminarId?: string },
   ) {
-    const userInfo = this.socketUserMap.get(client.id);
-    const seminarId = payload.seminarId || userInfo?.seminarId;
+    const seminarId = payload?.seminarId || this.socketRoomMap.get(client.id);
     if (seminarId) {
-      this.leaveSeminarRoom(client, seminarId, userInfo?.username);
-      this.socketUserMap.delete(client.id);
+      this.leaveSeminarRoom(client, seminarId);
+      this.socketRoomMap.delete(client.id);
     }
   }
+
+  // ==================== WEBRTC SIGNALING (ZOOM MESH) ====================
+
+  @SubscribeMessage('signal_offer')
+  handleSignalOffer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: WebRTCSignalPayload,
+  ) {
+    const { targetSocketId, offer } = payload;
+    if (!targetSocketId || !offer) return;
+
+    this.server.to(targetSocketId).emit('signal_offer', {
+      callerSocketId: client.id,
+      offer,
+    });
+  }
+
+  @SubscribeMessage('signal_answer')
+  handleSignalAnswer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: WebRTCSignalPayload,
+  ) {
+    const { targetSocketId, answer } = payload;
+    if (!targetSocketId || !answer) return;
+
+    this.server.to(targetSocketId).emit('signal_answer', {
+      callerSocketId: client.id,
+      answer,
+    });
+  }
+
+  @SubscribeMessage('ice_candidate')
+  handleIceCandidate(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: WebRTCSignalPayload,
+  ) {
+    const { targetSocketId, candidate } = payload;
+    if (!targetSocketId || !candidate) return;
+
+    this.server.to(targetSocketId).emit('ice_candidate', {
+      callerSocketId: client.id,
+      candidate,
+    });
+  }
+
+  @SubscribeMessage('toggle_media')
+  handleToggleMedia(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    payload: {
+      seminarId: string;
+      audioEnabled: boolean;
+      videoEnabled: boolean;
+    },
+  ) {
+    const { seminarId, audioEnabled, videoEnabled } = payload;
+    if (!seminarId) return;
+
+    const participantsMap = this.roomParticipants.get(seminarId);
+    if (participantsMap && participantsMap.has(client.id)) {
+      const p = participantsMap.get(client.id)!;
+      p.audioEnabled = audioEnabled;
+      p.videoEnabled = videoEnabled;
+    }
+
+    const roomName = `seminar_${seminarId}`;
+    client.to(roomName).emit('user_media_changed', {
+      socketId: client.id,
+      audioEnabled,
+      videoEnabled,
+    });
+  }
+
+  // ==================== PRESENTATION SYNC (AUTHOR-ONLY) ====================
+
+  @SubscribeMessage('file_changed')
+  handleFileChanged(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { seminarId: string; fileId: string; fileType?: string },
+  ) {
+    const { seminarId, fileId } = payload;
+    if (!seminarId || !fileId) return;
+
+    const participantsMap = this.roomParticipants.get(seminarId);
+    const sender = participantsMap?.get(client.id);
+    if (!sender?.isPresenter) {
+      this.logger.warn(`Non-presenter socket ${client.id} attempted to change file in room ${seminarId}`);
+      return { success: false, error: 'Only the presenter can change files' };
+    }
+
+    this.roomActiveFile.set(seminarId, fileId);
+    const roomName = `seminar_${seminarId}`;
+
+    client.to(roomName).emit('file_changed', payload);
+    return { success: true };
+  }
+
+  @SubscribeMessage('sync_slide')
+  handleSyncSlide(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: SlideSyncPayload,
+  ) {
+    const { seminarId, fileId, slideIndex } = payload;
+    if (!seminarId || fileId === undefined || slideIndex === undefined) return;
+
+    const participantsMap = this.roomParticipants.get(seminarId);
+    const sender = participantsMap?.get(client.id);
+    if (!sender?.isPresenter) {
+      this.logger.warn(`Non-presenter socket ${client.id} attempted to sync slide in room ${seminarId}`);
+      return { success: false, error: 'Only the presenter can control slides' };
+    }
+
+    // Cache state
+    this.roomSlideState.set(seminarId, payload);
+    const roomName = `seminar_${seminarId}`;
+
+    // Broadcast to all viewers
+    client.to(roomName).emit('slide_changed', payload);
+    return { success: true };
+  }
+
+  @SubscribeMessage('sync_3d_state')
+  handleSync3D(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: ThreeDStateSyncPayload,
+  ) {
+    const { seminarId } = payload;
+    if (!seminarId) return;
+
+    const participantsMap = this.roomParticipants.get(seminarId);
+    const sender = participantsMap?.get(client.id);
+    if (!sender?.isPresenter) {
+      this.logger.warn(`Non-presenter socket ${client.id} attempted to sync 3D state in room ${seminarId}`);
+      return { success: false, error: 'Only the presenter can control 3D state' };
+    }
+
+    // Cache 3D state
+    this.room3dState.set(seminarId, payload);
+    const roomName = `seminar_${seminarId}`;
+
+    // Broadcast to all viewers
+    client.to(roomName).emit('3d_state_changed', payload);
+    return { success: true };
+  }
+
+  @SubscribeMessage('laser_pointer')
+  handleLaserPointer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: LaserPointerPayload,
+  ) {
+    const { seminarId } = payload;
+    if (!seminarId) return;
+
+    const roomName = `seminar_${seminarId}`;
+    client.to(roomName).emit('laser_pointer_moved', payload);
+  }
+
+  // ==================== CHAT & REACTIONS ====================
 
   @SubscribeMessage('send_message')
   handleSendMessage(
@@ -253,52 +441,6 @@ export class LiveGateway
     });
   }
 
-  @SubscribeMessage('sync_slide')
-  handleSyncSlide(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() payload: SlideSyncPayload,
-  ) {
-    const { seminarId, fileId, slideIndex } = payload;
-    if (!seminarId || fileId === undefined || slideIndex === undefined) return;
-
-    // Cache state
-    this.roomSlideState.set(seminarId, payload);
-
-    const roomName = `seminar_${seminarId}`;
-    // Broadcast to all viewers
-    client.to(roomName).emit('slide_changed', payload);
-    return { success: true };
-  }
-
-  @SubscribeMessage('sync_3d_state')
-  handleSync3D(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() payload: ThreeDStateSyncPayload,
-  ) {
-    const { seminarId } = payload;
-    if (!seminarId) return;
-
-    // Cache 3D state
-    this.room3dState.set(seminarId, payload);
-
-    const roomName = `seminar_${seminarId}`;
-    // Broadcast to all viewers
-    client.to(roomName).emit('3d_state_changed', payload);
-    return { success: true };
-  }
-
-  @SubscribeMessage('laser_pointer')
-  handleLaserPointer(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() payload: LaserPointerPayload,
-  ) {
-    const { seminarId } = payload;
-    if (!seminarId) return;
-
-    const roomName = `seminar_${seminarId}`;
-    client.to(roomName).emit('laser_pointer_moved', payload);
-  }
-
   @SubscribeMessage('end_live_session')
   handleEndLive(
     @ConnectedSocket() client: Socket,
@@ -317,6 +459,7 @@ export class LiveGateway
     // Clear caches
     this.roomSlideState.delete(seminarId);
     this.room3dState.delete(seminarId);
+    this.roomActiveFile.delete(seminarId);
     this.roomParticipants.delete(seminarId);
   }
 
@@ -325,26 +468,30 @@ export class LiveGateway
    */
   broadcastLiveStateChange(seminarId: string, isLive: boolean, meta?: any) {
     const roomName = `seminar_${seminarId}`;
-    this.server.to(roomName).emit('live_state_changed', {
-      seminarId,
-      isLive,
-      meta,
-      timestamp: new Date().toISOString(),
-    });
+    if (this.server) {
+      this.server.to(roomName).emit('live_state_changed', {
+        seminarId,
+        isLive,
+        meta,
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 
   private leaveSeminarRoom(
     client: Socket,
     seminarId: string,
-    username?: string,
   ) {
     const roomName = `seminar_${seminarId}`;
     client.leave(roomName);
 
-    const participants = this.roomParticipants.get(seminarId);
-    if (participants) {
-      participants.delete(client.id);
-      const viewerCount = participants.size;
+    const participantsMap = this.roomParticipants.get(seminarId);
+    let leftUser: ParticipantInfo | undefined;
+
+    if (participantsMap) {
+      leftUser = participantsMap.get(client.id);
+      participantsMap.delete(client.id);
+      const viewerCount = participantsMap.size;
 
       if (viewerCount === 0) {
         this.roomParticipants.delete(seminarId);
@@ -357,7 +504,9 @@ export class LiveGateway
     }
 
     client.to(roomName).emit('user_left', {
-      username: username || 'Mehmon',
+      socketId: client.id,
+      userId: leftUser?.userId,
+      username: leftUser?.username || 'Mehmon',
       leftAt: new Date().toISOString(),
     });
   }

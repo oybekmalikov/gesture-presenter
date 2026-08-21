@@ -22,7 +22,7 @@ interface TrackedHand {
 	prevPalm: { x: number; y: number } | null;
 }
 
-const CONFIRM_FRAMES = 3; // Fast recognition like presentation viewer
+const CONFIRM_FRAMES = 3;
 const ZOOM_DEAD_ZONE = 0.001;
 
 export class ThreeDGestureProcessor {
@@ -113,10 +113,25 @@ export class ThreeDGestureProcessor {
 		const state = this.stateFor(hands[0].handedness);
 		const center = palmCenter(hands[0].landmarks);
 
+		if (state.confirmed === 'pinch') {
+			const thumb = hands[0].landmarks[4];
+			const index = hands[0].landmarks[8];
+			const pinchDist = Math.hypot(thumb.x - index.x, thumb.y - index.y);
+			let action: ThreeDGestureAction = { type: 'idle' };
+			if (state.prevPalm) {
+				const delta = (pinchDist - state.prevPalm.x) * 4;
+				if (Math.abs(delta) >= 0.005) {
+					action = { type: 'zoom', delta };
+				}
+			}
+			state.prevPalm = { x: pinchDist, y: 0 };
+			this.resetHeld = false;
+			return { action, label: '🤏 Chimchilash — masshtab', confirmedShapes };
+		}
+
 		if (state.confirmed === 'open_palm') {
 			let action: ThreeDGestureAction = { type: 'idle' };
 			if (state.prevPalm) {
-				// No dead zones or smoothing here, direct 1:1 mapping gives the most responsive feel
 				const x = center.x - state.prevPalm.x;
 				const y = center.y - state.prevPalm.y;
 				action = { type: 'rotate', x, y };

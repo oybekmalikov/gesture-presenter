@@ -67,6 +67,11 @@ export const UserDashboard: React.FC = () => {
   ).length;
 
 
+  // Active live seminars list
+  const activeLiveList = allSeminars.filter(
+    (s) => s.isLive || s.status === SeminarStatus.LIVE,
+  );
+
   return (
     <div className="page active" id="page-dashboard">
       {/* Top Stats Strip — 6 ta KPI karta */}
@@ -95,6 +100,7 @@ export const UserDashboard: React.FC = () => {
           value={liveCount}
           meta="Jonli efirlar soni"
           colorClass="sc-red"
+          onClick={() => navigate('/live')}
           icon={liveCount > 0 ? (
             <span style={{
               display: 'inline-block',
@@ -125,6 +131,90 @@ export const UserDashboard: React.FC = () => {
 
       {/* Main Grid */}
       <div className="main-grid">
+        {/* Active Live Broadcast Banner */}
+        {activeLiveList.length > 0 && (
+          <div
+            className="card"
+            style={{
+              gridColumn: 'span 12',
+              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(15, 23, 42, 0.9))',
+              border: '1.5px solid #ef4444',
+              boxShadow: '0 0 20px rgba(239, 68, 68, 0.2)',
+            }}
+          >
+            <div className="card-header" style={{ borderBottom: '1px solid rgba(239, 68, 68, 0.2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    background: '#ef4444',
+                    animation: 'pulse 1.2s infinite',
+                  }}
+                />
+                <div>
+                  <div className="card-title" style={{ color: '#ef4444', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span>Hozir Jonli Efirda ({activeLiveList.length})</span>
+                  </div>
+                  <div className="card-subtitle">
+                    OKMK xodimlari uchun to'g'ridan-to'g'ri efirga ulanish
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn btn-danger btn-sm"
+                onClick={() => navigate('/live')}
+              >
+                Barcha jonli efirlar →
+              </button>
+            </div>
+            <div className="card-body">
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                  gap: 12,
+                }}
+              >
+                {activeLiveList.map((sem) => (
+                  <div
+                    key={sem.id}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: 'var(--r-md)',
+                      background: 'rgba(15, 23, 42, 0.8)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                    }}
+                  >
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {sem.title}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                        {sem.author?.fio || 'Ma`ruzachi'} · {sem.department?.name || 'OKMK'}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm"
+                      style={{ flexShrink: 0, animation: 'pulse 1.5s infinite' }}
+                      onClick={() => navigate(`/live/${sem.id}`)}
+                    >
+                      🔴 Efirga kirish
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 8-Item Presentation Grid — Left */}
         <div style={{ gridColumn: 'span 8' }}>
           <PresentationGrid8

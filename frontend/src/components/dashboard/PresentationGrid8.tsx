@@ -121,7 +121,18 @@ export const PresentationGrid8: React.FC<Props> = ({ seminars, loading }) => {
                 }}
               >
                 {/* Thumbnail wrap */}
-                <div className="presentation-thumb-wrap">
+                <div
+                  className="presentation-thumb-wrap"
+                  style={
+                    item.coverImageUrl
+                      ? {
+                          backgroundImage: `url(${item.coverImageUrl})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                        }
+                      : undefined
+                  }
+                >
                   {/* Status Badge */}
                   {isLive ? (
                     <div className="presentation-badge-tag badge-live-stream">
@@ -131,6 +142,10 @@ export const PresentationGrid8: React.FC<Props> = ({ seminars, loading }) => {
                   ) : item.status === SeminarStatus.SCHEDULED ? (
                     <div className="presentation-badge-tag badge-scheduled-tag">
                       <span>{t('Scheduled')}</span>
+                    </div>
+                  ) : item.status === SeminarStatus.DRAFT ? (
+                    <div className="presentation-badge-tag" style={{ background: 'rgba(148, 163, 184, 0.15)', color: '#94a3b8' }}>
+                      <span>Qoralama</span>
                     </div>
                   ) : (
                     <div className="presentation-badge-tag badge-completed-tag">
@@ -142,9 +157,11 @@ export const PresentationGrid8: React.FC<Props> = ({ seminars, loading }) => {
                   <div className="presentation-file-type-pill">{fileType}</div>
 
                   {/* Vector Placeholder / Graphic */}
-                  <div style={{ opacity: 0.25 }}>
-                    {fileType === '3D MODEL' ? <CubeIcon /> : <DocIcon />}
-                  </div>
+                  {!item.coverImageUrl && (
+                    <div style={{ opacity: 0.25 }}>
+                      {fileType === '3D MODEL' ? <CubeIcon /> : <DocIcon />}
+                    </div>
+                  )}
                 </div>
 
                 {/* Content info */}

@@ -23,6 +23,9 @@ import {
 import { Role } from '../../common/enums/role.enum';
 import { SeminarStatus, FileAccess } from '../../common/enums';
 
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../../common/enums';
+
 @Injectable()
 export class SeminarsService {
   constructor(
@@ -38,6 +41,7 @@ export class SeminarsService {
     private readonly commentRepo: Repository<Comment>,
     @InjectRepository(SavedSeminar)
     private readonly savedRepo: Repository<SavedSeminar>,
+    private readonly notificationsService: NotificationsService,
   ) { }
 
   async create(
@@ -60,16 +64,49 @@ export class SeminarsService {
     const seminar = this.seminarRepo.create({
       title: dto.title,
       description: dto.description,
+      coverImageUrl: dto.coverImageUrl,
       authorId: userId,
       targetUserId: dto.targetUserId,
       departmentId: dto.departmentId,
-      status: dto.status || SeminarStatus.DRAFT,
+      status: dto.status || (dto.scheduledAt ? SeminarStatus.SCHEDULED : SeminarStatus.SCHEDULED),
       fileAccess: dto.fileAccess || FileAccess.PUBLIC,
       scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
       tags,
     });
 
     const saved = await this.seminarRepo.save(seminar);
+
+    // If targetUserId is specified, notify them immediately
+    if (saved.targetUserId) {
+      this.notificationsService
+        .notifySeminarAssigned(saved, saved.targetUserId)
+        .catch(() => {});
+    }
+
+    // If scheduled within 15 minutes, send immediate reminder (Point 9)
+    if (saved.scheduledAt) {
+      const now = Date.now();
+      const diffMs = new Date(saved.scheduledAt).getTime() - now;
+      const diffMin = Math.round(diffMs / (60 * 1000));
+      if (diffMin >= -5 && diffMin <= 15) {
+        const recipients = [userId];
+        if (saved.targetUserId && saved.targetUserId !== userId) {
+          recipients.push(saved.targetUserId);
+        }
+        for (const rId of recipients) {
+          this.notificationsService
+            .createNotification(
+              rId,
+              NotificationType.SEMINAR_REMINDER,
+              `Seminar eslatmasi: ${diffMin <= 1 ? '1 daqiqa qoldi' : `${diffMin} daqiqa qoldi`}`,
+              `"${saved.title}" seminari boshlanishiga oz qoldi (${diffMin <= 1 ? '1 daqiqa' : `${diffMin} daqiqa`}). Boshlanish vaqti: ${new Date(saved.scheduledAt).toLocaleTimeString()}`,
+              { seminarId: saved.id, scheduledAt: saved.scheduledAt, intervalKey: '5m' },
+            )
+            .catch(() => {});
+        }
+      }
+    }
+
     return successResponse(saved, MESSAGES.SEMINAR_CREATED);
   }
 
@@ -293,7 +330,7 @@ export class SeminarsService {
       });
     }
 
-    // 8. Sorting
+    // 8. Sorting — Active Live Streams ALWAYS appear first
     switch (query.sortBy) {
       case SeminarSortBy.POPULAR:
         // Weighted Popularity formula: likes * 3 + views * 1 + comments * 2 + saves * 2.5
@@ -306,15 +343,18 @@ export class SeminarsService {
           )`,
           'popularity_score',
         );
-        qb.orderBy('popularity_score', 'DESC');
+        qb.orderBy('seminar.isLive', 'DESC');
+        qb.addOrderBy('popularity_score', 'DESC');
         qb.addOrderBy('seminar.createdAt', 'DESC');
         break;
       case SeminarSortBy.VIEWS:
-        qb.orderBy('seminar.viewCount', 'DESC');
+        qb.orderBy('seminar.isLive', 'DESC');
+        qb.addOrderBy('seminar.viewCount', 'DESC');
         break;
       case SeminarSortBy.LATEST:
       default:
-        qb.orderBy('seminar.createdAt', 'DESC');
+        qb.orderBy('seminar.isLive', 'DESC');
+        qb.addOrderBy('seminar.createdAt', 'DESC');
         break;
     }
 
@@ -531,6 +571,7 @@ export class SeminarsService {
 
     if (dto.title !== undefined) seminar.title = dto.title;
     if (dto.description !== undefined) seminar.description = dto.description;
+    if (dto.coverImageUrl !== undefined) seminar.coverImageUrl = dto.coverImageUrl;
     if (dto.targetUserId !== undefined) seminar.targetUserId = dto.targetUserId;
     if (dto.departmentId !== undefined) seminar.departmentId = dto.departmentId;
     if (dto.status !== undefined) seminar.status = dto.status;

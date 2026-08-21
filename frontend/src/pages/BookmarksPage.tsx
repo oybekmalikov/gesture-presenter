@@ -1,10 +1,10 @@
-// src/pages/BookmarksPage.tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { seminarsApi } from '../services/api';
 import { Seminar } from '../types';
 import { SeminarCard } from '../components/seminars/SeminarCard';
 import { useI18n } from '../utils/i18n';
+import { ArrowRight, ChevronRight, SquareOff } from 'lucide-react';
 
 export const BookmarksPage: React.FC = () => {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ export const BookmarksPage: React.FC = () => {
         setSeminars(res.items);
         setTotal(res.total);
       }
-    } catch {}
+    } catch { }
     finally {
       setLoading(false);
     }
@@ -54,7 +54,7 @@ export const BookmarksPage: React.FC = () => {
             className="btn btn-ghost btn-sm"
             onClick={() => navigate('/seminars')}
           >
-            Barcha seminarlar →
+            Barcha seminarlar <ChevronRight />
           </button>
         </div>
       </div>
@@ -67,7 +67,7 @@ export const BookmarksPage: React.FC = () => {
         ) : seminars.length === 0 ? (
           <div className="card" style={{ padding: 40, textAlign: 'center' }}>
             <div className="empty-state">
-              Hozircha saqlangan seminarlar mavjud emas. Taqdimotlar kartasidagi belgi orqali saqlab qo'yishingiz mumkin.
+              <SquareOff /> Hozircha saqlangan seminarlar mavjud emas. Taqdimotlar kartasidagi belgi orqali saqlab qo'yishingiz mumkin.
             </div>
             <div style={{ marginTop: 16 }}>
               <button
@@ -75,7 +75,7 @@ export const BookmarksPage: React.FC = () => {
                 className="btn btn-primary btn-sm"
                 onClick={() => navigate('/seminars')}
               >
-                Seminarlar katalogiga o'tish
+                Seminarlar katalogiga o'tish <ChevronRight />
               </button>
             </div>
           </div>

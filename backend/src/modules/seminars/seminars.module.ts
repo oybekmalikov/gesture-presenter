@@ -10,6 +10,8 @@ import { Comment } from '../../database/entities/comment.entity';
 import { SavedSeminar } from '../../database/entities/saved-seminar.entity';
 import { SeminarViewLog } from '../../database/entities/seminar-view-log.entity';
 
+import { NotificationsModule } from '../notifications/notifications.module';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -21,6 +23,7 @@ import { SeminarViewLog } from '../../database/entities/seminar-view-log.entity'
       SavedSeminar,
       SeminarViewLog,
     ]),
+    NotificationsModule,
   ],
   controllers: [SeminarsController],
   providers: [SeminarsService],

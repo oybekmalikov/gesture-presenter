@@ -1,8 +1,8 @@
-// src/pages/AiAssistantPage.tsx
 import React, { useState, useEffect } from 'react';
 import { aiApi } from '../services/api';
 import { useI18n } from '../utils/i18n';
 import { AiRobot3D } from '../components/ai/AiRobot3D';
+import { Lightbulb, Send } from 'lucide-react';
 
 const TYPEWRITER_PHRASES = [
   "Eng mos taqdimotlarni ko'rsataman...",
@@ -14,34 +14,21 @@ const TYPEWRITER_PHRASES = [
 
 export const AiAssistantPage: React.FC = () => {
   const t = useI18n();
-
   const [activeTab, setActiveTab] = useState<'chat' | 'outline' | 'slides' | 'templates'>('chat');
   const [soundEnabled, setSoundEnabled] = useState(true);
-
-  // Typewriter effect state
   const [phraseIdx, setPhraseIdx] = useState(0);
   const [typedText, setTypedText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
-
-  // Templates
   const [templates, setTemplates] = useState<any[]>([]);
-
-  // Hero prompt input
   const [heroPrompt, setHeroPrompt] = useState('');
-
-  // Outline Form
   const [outlineTopic, setOutlineTopic] = useState('');
   const [outlineSlideCount, setOutlineSlideCount] = useState(8);
   const [outlineResult, setOutlineResult] = useState<any | null>(null);
   const [outlineLoading, setOutlineLoading] = useState(false);
-
-  // Slides Form
   const [slideTopic, setSlideTopic] = useState('');
   const [slideCount, setSlideCount] = useState(6);
   const [slidesResult, setSlidesResult] = useState<any[]>([]);
   const [slidesLoading, setSlidesLoading] = useState(false);
-
-  // Chat Form
   const [chatPrompt, setChatPrompt] = useState('');
   const [chatMessages, setChatMessages] = useState<
     { role: 'user' | 'assistant'; text: string; suggestions?: string[] }[]
@@ -58,15 +45,11 @@ export const AiAssistantPage: React.FC = () => {
     },
   ]);
   const [chatLoading, setChatLoading] = useState(false);
-
-  // Typewriter animation loop
   useEffect(() => {
     const currentPhrase = TYPEWRITER_PHRASES[phraseIdx];
     const typingSpeed = isDeleting ? 30 : 60;
-
     const timer = setTimeout(() => {
       if (!isDeleting && typedText === currentPhrase) {
-        // Pause before deleting
         setTimeout(() => setIsDeleting(true), 2000);
       } else if (isDeleting && typedText === '') {
         setIsDeleting(false);
@@ -89,7 +72,7 @@ export const AiAssistantPage: React.FC = () => {
       .then((res) => {
         if (Array.isArray(res)) setTemplates(res);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleHeroSubmit = (e: React.FormEvent) => {
@@ -111,7 +94,7 @@ export const AiAssistantPage: React.FC = () => {
         language: 'uz',
       });
       setOutlineResult(res);
-    } catch {}
+    } catch { }
     finally {
       setOutlineLoading(false);
     }
@@ -130,7 +113,7 @@ export const AiAssistantPage: React.FC = () => {
       if (res?.slides) {
         setSlidesResult(res.slides);
       }
-    } catch {}
+    } catch { }
     finally {
       setSlidesLoading(false);
     }
@@ -170,7 +153,6 @@ export const AiAssistantPage: React.FC = () => {
 
   return (
     <div className="page active" id="page-ai-assistant">
-      {/* 1. CAREER EDU STYLE AI HERO & 3D ROBOT MASCOT */}
       <div
         className="ai-hero-card"
         style={{
@@ -183,7 +165,6 @@ export const AiAssistantPage: React.FC = () => {
           position: 'relative',
         }}
       >
-        {/* Glow effect behind the robot */}
         <div style={{
           position: 'absolute',
           right: 0,
@@ -204,7 +185,6 @@ export const AiAssistantPage: React.FC = () => {
             OKMK sun'iy intellekt maslahatchisi slaydlar tayyorlash, 3D modellarni tushuntirish va sanoat xavfsizligi bo'yicha taqdimot rejasini tuzishda ko'maklashadi.
           </div>
 
-          {/* Quick Search / Ask Bar */}
           <form onSubmit={handleHeroSubmit} style={{ display: 'flex', gap: 8, width: '100%' }}>
             <input
               type="text"
@@ -218,7 +198,6 @@ export const AiAssistantPage: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Suggestion Chips */}
           <div className="ai-quick-suggestions">
             {[
               '3D modelli taqdimot',
@@ -235,26 +214,21 @@ export const AiAssistantPage: React.FC = () => {
                   setActiveTab('chat');
                 }}
               >
-                <span>💡 {sug}</span>
+                <span><Lightbulb /> {sug}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* 3D Interactive Robot Mascot with Floating Speech Bubble & Sound Toggle */}
         <div className="ai-robot-panel" style={{ height: 260 }}>
-          {/* Animated Thought / Speech Bubble */}
           <div className="ai-speech-bubble">
             <span>{typedText}</span>
             <span style={{ animation: 'blink 1s infinite', marginLeft: 2, fontWeight: 300 }}>|</span>
           </div>
 
-          {/* Interactive 3D Robot Canvas */}
           <div style={{ width: 190, height: 240, marginLeft: 'auto', position: 'relative' }}>
             <AiRobot3D isTalking={chatLoading || outlineLoading || slidesLoading} />
           </div>
-
-          {/* Sound / Mute Toggle Button */}
           <button
             type="button"
             className="btn-icon"
@@ -321,9 +295,7 @@ export const AiAssistantPage: React.FC = () => {
         </button>
       </div>
 
-      {/* 3. ACTIVE TAB CONTENT */}
       <div>
-        {/* TAB 1: AI CHAT */}
         {activeTab === 'chat' && (
           <div className="card" style={{ maxWidth: 860, margin: '0 auto', display: 'flex', flexDirection: 'column', minHeight: 480 }}>
             <div className="card-header">
@@ -378,13 +350,12 @@ export const AiAssistantPage: React.FC = () => {
                 onChange={(e) => setChatPrompt(e.target.value)}
               />
               <button type="submit" className="btn btn-primary btn-sm" disabled={chatLoading}>
-                Yuborish
+                <Send />
               </button>
             </form>
           </div>
         )}
 
-        {/* TAB 2: OUTLINE */}
         {activeTab === 'outline' && (
           <div className="main-grid">
             <div className="card" style={{ gridColumn: 'span 5' }}>
@@ -475,7 +446,6 @@ export const AiAssistantPage: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 3: SLIDES */}
         {activeTab === 'slides' && (
           <div className="main-grid">
             <div className="card" style={{ gridColumn: 'span 5' }}>
@@ -560,7 +530,6 @@ export const AiAssistantPage: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 4: TEMPLATES */}
         {activeTab === 'templates' && (
           <div
             style={{

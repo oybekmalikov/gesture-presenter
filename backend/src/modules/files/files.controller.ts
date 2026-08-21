@@ -55,6 +55,23 @@ const uploadStorage = diskStorage({
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 
+  @Post('upload-cover')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: uploadStorage,
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+      },
+    }),
+  )
+  uploadCover(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('Rasm yuborilmadi');
+    }
+    return this.filesService.uploadCoverImage(file);
+  }
+
   @Post('upload/:seminarId')
   @UseGuards(JwtAuthGuard)
   @Audit({ action: 'file_upload', entityType: 'file' })

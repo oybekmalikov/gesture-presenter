@@ -11,12 +11,24 @@ import { StoredFile } from '../types/file';
 const DWELL_MS = 450;
 const MAGNET_RADIUS = 0.13;
 
-interface ThreeDViewerProps {
-  onBack: () => void;
+export interface ThreeDViewerProps {
+  onBack?: () => void;
   modelUrl?: string;
   modelName?: string;
   availableModels?: StoredFile[];
   onSelectModel?: (file: StoredFile) => void;
+  // Sync & Presentation Props
+  rotation?: [number, number];
+  scale?: number;
+  exploded?: boolean;
+  onRotationChange?: (rotation: [number, number]) => void;
+  onScaleChange?: (scale: number) => void;
+  onExplodeChange?: (exploded: boolean) => void;
+  isPresenter?: boolean;
+  hands?: any[];
+  gestureActive?: boolean;
+  onToggleTheater?: () => void;
+  isTheaterMode?: boolean;
 }
 
 interface CursorPoint {
@@ -48,7 +60,7 @@ function metadataFor(object: THREE.Object3D): Record<string, unknown> {
   const mesh = object instanceof THREE.Mesh ? object : null;
   const materials = mesh
     ? (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).map(
-        (item) => item.name || item.type
+        (item) => item.name || item.type,
       )
     : [];
   const geo = mesh?.geometry;
@@ -86,7 +98,7 @@ function metadataFor(object: THREE.Object3D): Record<string, unknown> {
   };
 }
 
-/* ── Explodable Model ── */
+/* ── Explodable Model Component ── */
 function ExplodableModel({
   url,
   exploded,
@@ -123,7 +135,7 @@ function ExplodableModel({
   }, [scene]);
 
   useFrame((_, delta) => {
-    const damping = 1 - Math.exp(-4.5 * delta);
+    const damping = 1 - Math.exp(-5.5 * delta);
     for (const part of parts) {
       const target = part.original.clone();
       if (exploded) target.add(part.offset);
@@ -138,7 +150,7 @@ function ExplodableModel({
   );
 }
 
-/* ── Selection Box ── */
+/* ── Selection Bounding Box ── */
 function SelectionBox({ object }: { object: THREE.Object3D | null }) {
   const helper = useMemo(() => (object ? new THREE.BoxHelper(object, 0x00e5ff) : null), [object]);
   useFrame(() => helper?.update());
@@ -146,7 +158,7 @@ function SelectionBox({ object }: { object: THREE.Object3D | null }) {
   return helper ? <primitive object={helper} /> : null;
 }
 
-/* ── Pointer Selector (raycast + magnet) ── */
+/* ── Pointer Selector (raycast + magnet snapping) ── */
 function PointerSelector({
   pointer,
   onTarget,
@@ -207,68 +219,123 @@ function PointerSelector({
           }
         : null,
       cursor,
-      snapped
+      snapped,
     );
   });
   return null;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Main ThreeDViewer
+   Main Interactive 3D Viewer
    ══════════════════════════════════════════════════════════════════════════ */
-
 export function ThreeDViewer({
   onBack,
   modelUrl = '/models/sag_mill_v2.glb',
-  modelName = 'sag_mill_v2.glb',
+  modelName = '3D Model',
   availableModels = [],
   onSelectModel,
+  rotation: controlledRotation,
+  scale: controlledScale,
+  exploded: controlledExploded,
+  onRotationChange,
+  onScaleChange,
+  onExplodeChange,
+  isPresenter = true,
+  hands: externalHands,
+  gestureActive = false,
+  onToggleTheater,
+  isTheaterMode = false,
 }: ThreeDViewerProps) {
-  const { active, loading, error, hands, videoRef, start, stop } = useHandTracking();
-  const [rotation, setRotation] = useState<[number, number]>([0, 0]);
-  const [scale, setScale] = useState(1);
-  const [exploded, setExploded] = useState(false);
+  // Local fallback hand tracking if not passed from parent
+  const internalHandTracking = useHandTracking();
+  const effectiveHands = externalHands || (gestureActive ? internalHandTracking.hands : []);
+  const effectiveActive = gestureActive || internalHandTracking.active;
+
+  // Local state if not controlled
+  const [internalRotation, setInternalRotation] = useState<[number, number]>([0, 0]);
+  const [internalScale, setInternalScale] = useState(1);
+  const [internalExploded, setInternalExploded] = useState(false);
+
+  const rotation = controlledRotation !== undefined ? controlledRotation : internalRotation;
+  const scale = controlledScale !== undefined ? controlledScale : internalScale;
+  const exploded = controlledExploded !== undefined ? controlledExploded : internalExploded;
+
   const [label, setLabel] = useState("🖐️ Qo'lni ko'rsating");
   const [pointer, setPointer] = useState<CursorPoint | null>(null);
   const [magneticCursor, setMagneticCursor] = useState<CursorPoint | null>(null);
   const [cursorSnapped, setCursorSnapped] = useState(false);
   const [hovered, setHovered] = useState<PartInfo | null>(null);
   const [selected, setSelected] = useState<PartInfo | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   const processor = useRef(new ThreeDGestureProcessor());
 
-  // Reset states when model URL changes
+  const updateRotation = useCallback(
+    (newRot: [number, number] | ((prev: [number, number]) => [number, number])) => {
+      const resolved = typeof newRot === 'function' ? newRot(rotation) : newRot;
+      if (onRotationChange) onRotationChange(resolved);
+      else setInternalRotation(resolved);
+    },
+    [rotation, onRotationChange],
+  );
+
+  const updateScale = useCallback(
+    (newScale: number | ((prev: number) => number)) => {
+      const resolved = typeof newScale === 'function' ? newScale(scale) : newScale;
+      const clamped = Math.min(3.5, Math.max(0.3, resolved));
+      if (onScaleChange) onScaleChange(clamped);
+      else setInternalScale(clamped);
+    },
+    [scale, onScaleChange],
+  );
+
+  const updateExploded = useCallback(
+    (newExploded: boolean | ((prev: boolean) => boolean)) => {
+      const resolved = typeof newExploded === 'function' ? newExploded(exploded) : newExploded;
+      if (onExplodeChange) onExplodeChange(resolved);
+      else setInternalExploded(resolved);
+    },
+    [exploded, onExplodeChange],
+  );
+
+  // Reset states on model URL change
   useEffect(() => {
     setSelected(null);
     setHovered(null);
-    setRotation([0, 0]);
-    setScale(1);
-    setExploded(false);
+    updateRotation([0, 0]);
+    updateScale(1);
+    updateExploded(false);
   }, [modelUrl]);
 
+  // AI Gesture Processor loop
   useEffect(() => {
-    if (!active) {
+    if (!effectiveActive || !effectiveHands || effectiveHands.length === 0) {
       processor.current.reset();
       setPointer(null);
-      setLabel("Kamera o'chiq");
+      setLabel(effectiveActive ? "🖐️ Qo'lingizni ko'rsating" : "AI Gesture o'chiq");
       return;
     }
-    const frame = processor.current.process(hands);
+
+    const frame = processor.current.process(effectiveHands);
     setLabel(frame.label);
+
+    if (!isPresenter) return; // Only presenter can rotate/zoom for everyone
+
     switch (frame.action.type) {
       case 'rotate': {
         const { x, y } = frame.action;
-        setRotation((value) => [value[0] + y * 3.2, value[1] + x * 4]);
+        updateRotation((val) => [val[0] + y * 2.8, val[1] + x * 3.5]);
         setPointer(null);
         break;
       }
       case 'zoom': {
         const { delta } = frame.action;
-        setScale((value) => Math.min(2.5, Math.max(0.35, value + delta * 2.4)));
+        updateScale((val) => val + delta * 1.8);
         setPointer(null);
         break;
       }
       case 'toggle-explode':
-        setExploded((value) => !value);
+        updateExploded((val) => !val);
         setPointer(null);
         break;
       case 'point':
@@ -277,7 +344,7 @@ export function ThreeDViewer({
       default:
         setPointer(null);
     }
-  }, [active, hands]);
+  }, [effectiveActive, effectiveHands, isPresenter, updateRotation, updateScale, updateExploded]);
 
   useEffect(() => {
     if (!hovered || !pointer) return;
@@ -291,50 +358,87 @@ export function ThreeDViewer({
       setMagneticCursor(cursor);
       setCursorSnapped(snapped);
     },
-    []
+    [],
   );
 
   const resetView = () => {
-    setRotation([0, 0]);
-    setScale(1);
+    updateRotation([0, 0]);
+    updateScale(1);
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
   };
 
   return (
     <div
       style={{
-        position: 'relative',
+        position: isFullscreen ? 'fixed' : 'relative',
+        inset: isFullscreen ? 0 : undefined,
+        zIndex: isFullscreen ? 99999 : 1,
         width: '100%',
-        height: 'calc(100vh - 64px)',
+        height: '100%',
         background: '#07090e',
         overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      {/* ── Top Bar Controls ── */}
-      <div style={headerStyle}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: 'var(--cyan)', fontWeight: 700, fontSize: 14 }}>
-                OKMK 3D DIGITAL TWIN
-              </span>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontFamily: 'var(--font-mono)',
-                  padding: '2px 8px',
-                  borderRadius: 4,
-                  background: exploded ? 'var(--amber-soft)' : 'var(--cyan-soft)',
-                  color: exploded ? 'var(--amber)' : 'var(--cyan)',
-                  border: `1px solid ${exploded ? 'var(--amber)' : 'var(--cyan)'}`,
-                }}
-              >
-                {exploded ? "Qismlarga sochilgan" : "Yig'ilgan holatda"}
-              </span>
-            </div>
-            <div style={subtleStyle}>{modelName}</div>
+      {/* ── Top Zoom-Style Control Bar ── */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '8px 16px',
+          background: 'rgba(11, 15, 25, 0.88)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          zIndex: 50,
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span
+              style={{
+                color: 'var(--cyan, #00e5ff)',
+                fontWeight: 700,
+                fontSize: 13,
+                letterSpacing: 0.5,
+              }}
+            >
+              🧊 3D MODEL
+            </span>
+            <span
+              style={{
+                fontSize: 11,
+                fontFamily: 'var(--f-mono)',
+                padding: '2px 8px',
+                borderRadius: 4,
+                background: exploded ? 'rgba(245, 158, 11, 0.15)' : 'rgba(0, 229, 255, 0.12)',
+                color: exploded ? '#f59e0b' : '#00e5ff',
+                border: `1px solid ${exploded ? 'rgba(245, 158, 11, 0.3)' : 'rgba(0, 229, 255, 0.25)'}`,
+              }}
+            >
+              {exploded ? "Qismlarga sochilgan" : "Yig'ilgan"}
+            </span>
+          </div>
+          <div
+            style={{
+              color: 'var(--text-muted, #94a3b8)',
+              fontSize: 12,
+              fontFamily: 'var(--f-mono)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              maxWidth: 220,
+            }}
+          >
+            {modelName}
           </div>
 
-          {/* Model Switcher dropdown if multiple models available */}
+          {/* Model Switcher if multiple 3D models available */}
           {availableModels.length > 1 && onSelectModel && (
             <select
               value={availableModels.find((m) => m.url === modelUrl || `/models/${m.fileName}` === modelUrl)?.id || ''}
@@ -343,19 +447,19 @@ export function ThreeDViewer({
                 if (target) onSelectModel(target);
               }}
               style={{
-                padding: '6px 12px',
-                borderRadius: 8,
-                background: 'var(--bg-surface-2)',
-                border: '1px solid var(--border)',
+                padding: '4px 10px',
+                borderRadius: 6,
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
                 color: '#fff',
-                fontSize: 12,
-                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                fontFamily: 'var(--f-mono)',
                 outline: 'none',
                 cursor: 'pointer',
               }}
             >
               {availableModels.map((m) => (
-                <option key={m.id} value={m.id}>
+                <option key={m.id} value={m.id} style={{ background: '#0f172a' }}>
                   {m.originalName}
                 </option>
               ))}
@@ -363,50 +467,111 @@ export function ThreeDViewer({
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* Action Buttons Toolbar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {isPresenter && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              style={{
+                fontSize: 11,
+                padding: '4px 10px',
+                borderColor: exploded ? '#f59e0b' : undefined,
+                color: exploded ? '#f59e0b' : undefined,
+              }}
+              onClick={() => updateExploded((val) => !val)}
+              title="Qismlarga sochish yoki yig'ish"
+            >
+              {exploded ? "⚙️ Yig'ish" : "💥 Sochish"}
+            </button>
+          )}
+
           <button
-            onClick={() => setExploded((value) => !value)}
-            style={{
-              ...buttonStyle,
-              borderColor: exploded ? 'var(--amber)' : 'var(--border)',
-              color: exploded ? 'var(--amber)' : 'var(--text-main)',
-            }}
+            type="button"
+            className="btn btn-ghost btn-sm"
+            style={{ fontSize: 11, padding: '4px 8px' }}
+            onClick={() => updateScale((val) => Math.min(3.5, val + 0.2))}
+            title="Kattalashtirish (Zoom +)"
           >
-            {exploded ? "⚙️ Yig'ish (Assemble)" : "💥 Sochish (Explode)"}
-          </button>
-          <button onClick={resetView} style={buttonStyle}>
-            ↺ Kamerani tiklash
+            🔍+
           </button>
           <button
-            onClick={onBack}
-            style={{
-              ...buttonStyle,
-              background: 'var(--cyan-soft)',
-              borderColor: 'var(--cyan)',
-              color: 'var(--cyan)',
-            }}
+            type="button"
+            className="btn btn-ghost btn-sm"
+            style={{ fontSize: 11, padding: '4px 8px' }}
+            onClick={() => updateScale((val) => Math.max(0.3, val - 0.2))}
+            title="Kichiklashtirish (Zoom -)"
           >
-            ← Kutubxona
+            🔍-
           </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            style={{ fontSize: 11, padding: '4px 10px' }}
+            onClick={resetView}
+            title="Kamerani markazlashtirish va moslash"
+          >
+            ↺ Moslash
+          </button>
+
+          {onToggleTheater && (
+            <button
+              type="button"
+              className={`btn ${isTheaterMode ? 'btn-primary' : 'btn-ghost'} btn-sm`}
+              style={{ fontSize: 11, padding: '4px 10px' }}
+              onClick={onToggleTheater}
+              title={isTheaterMode ? "Yon panelni ochish" : "Keng ekran rejimi (Chatni yopish)"}
+            >
+              🗖 {isTheaterMode ? "Yon panel" : "Keng ekran"}
+            </button>
+          )}
+
+          <button
+            type="button"
+            className={`btn ${isFullscreen ? 'btn-primary' : 'btn-ghost'} btn-sm`}
+            style={{ fontSize: 11, padding: '4px 10px' }}
+            onClick={toggleFullscreen}
+            title="Butun ekran rejimiga o'tish (Zoom style)"
+          >
+            ⛶ {isFullscreen ? "Kichraytirish" : "To'liq ekran"}
+          </button>
+
+          {onBack && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              style={{ fontSize: 11, padding: '4px 10px' }}
+              onClick={onBack}
+            >
+              ← Orqaga
+            </button>
+          )}
         </div>
       </div>
 
-      {/* ── 3D Canvas ── */}
-      <div style={{ position: 'absolute', inset: '58px 0 0' }}>
+      {/* ── 3D Canvas Viewport ── */}
+      <div style={{ flex: 1, position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
         <Suspense
           fallback={
             <div style={loadingStyle}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>🧊</div>
-              <div>3D model yuklanmoqda…</div>
+              <div style={{ fontSize: 36, marginBottom: 12, animation: 'pulse 1.2s infinite' }}>🧊</div>
+              <div style={{ fontSize: 13, color: 'var(--cyan, #00e5ff)' }}>3D model yuklanmoqda…</div>
             </div>
           }
         >
-          <Canvas camera={{ position: [20, 16, 24], fov: 42 }} dpr={[1, 1.75]}>
+          <Canvas
+            camera={{ position: [0, 6, 12], fov: 45 }}
+            dpr={[1, 2]}
+            style={{ width: '100%', height: '100%', display: 'block' }}
+          >
             <color attach="background" args={['#07090e']} />
-            <ambientLight intensity={1.4} />
-            <directionalLight position={[8, 12, 8]} intensity={2.2} />
-            <directionalLight position={[-7, 3, -5]} intensity={0.8} color="#7c9cff" />
-            <Bounds fit clip margin={3.5}>
+            <ambientLight intensity={1.5} />
+            <directionalLight position={[10, 15, 10]} intensity={2.4} />
+            <directionalLight position={[-10, 5, -8]} intensity={1.0} color="#7c9cff" />
+            <directionalLight position={[0, -10, 5]} intensity={0.5} />
+
+            {/* Optimal Bounds margin=1.15 so 3D models fill the entire screen nicely */}
+            <Bounds fit clip margin={1.15}>
               <ExplodableModel
                 url={modelUrl}
                 exploded={exploded}
@@ -414,72 +579,69 @@ export function ThreeDViewer({
                 scale={scale}
               />
             </Bounds>
+
             <PointerSelector pointer={pointer} onTarget={handleTarget} />
             <SelectionBox object={selected?.object ?? null} />
-            <OrbitControls makeDefault enableDamping enableRotate={false} enableZoom={false} />
+
+            {/* OrbitControls enables seamless mouse/finger rotation & zoom */}
+            <OrbitControls
+              makeDefault
+              enableDamping
+              dampingFactor={0.06}
+              enableRotate={true}
+              enableZoom={true}
+              enablePan={true}
+              minDistance={1}
+              maxDistance={100}
+            />
             <Environment preset="warehouse" />
           </Canvas>
         </Suspense>
-      </div>
 
-      {/* ── Magnetic Laser Cursor ── */}
-      {magneticCursor && pointer && (
-        <div
-          style={{
-            ...cursorStyle,
-            left: `${magneticCursor.x * 100}%`,
-            top: `${58 + magneticCursor.y * (window.innerHeight - 58 - 64)}px`,
-            ...(cursorSnapped ? cursorSnappedStyle : {}),
-          }}
-        >
-          <span style={cursorInnerDotStyle} />
-          {cursorSnapped && <span style={cursorRippleStyle} />}
-        </div>
-      )}
-
-      {/* ── Gesture Status & Selection Hint ── */}
-      <div style={hintStyle}>
-        <div style={{ color: active ? 'var(--cyan)' : 'var(--text-muted)' }}>{label}</div>
-        {hovered && pointer ? (
-          <div style={{ color: 'var(--amber)', marginTop: 2 }}>
-            🎯 {hovered.name} — ma'lumotni ochish uchun ushlab turing
+        {/* ── Magnetic Laser Cursor ── */}
+        {magneticCursor && pointer && (
+          <div
+            style={{
+              ...cursorStyle,
+              left: `${magneticCursor.x * 100}%`,
+              top: `${magneticCursor.y * 100}%`,
+              ...(cursorSnapped ? cursorSnappedStyle : {}),
+            }}
+          >
+            <span style={cursorInnerDotStyle} />
+            {cursorSnapped && <span style={cursorRippleStyle} />}
           </div>
-        ) : null}
+        )}
+
+        {/* ── AI Gesture Live Status Hint ── */}
+        {effectiveActive && (
+          <div style={hintStyle}>
+            <div style={{ color: 'var(--cyan, #00e5ff)', fontWeight: 600 }}>{label}</div>
+            {hovered && pointer ? (
+              <div style={{ color: '#f59e0b', marginTop: 2, fontSize: 11 }}>
+                🎯 {hovered.name} — ma'lumotni ochish uchun ushlab turing
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {/* ── Metadata Details Panel ── */}
+        {selected && <MetadataPanel part={selected} onClose={() => setSelected(null)} />}
       </div>
-
-      {/* ── Metadata Panel ── */}
-      {selected && <MetadataPanel part={selected} onClose={() => setSelected(null)} />}
-
-      {/* ── Camera Widget ── */}
-      <HandCameraWidget
-        videoRef={videoRef}
-        hands={hands.map((hand) => ({
-          handedness: hand.handedness,
-          shape: classifyHandShape(hand.landmarks),
-          landmarks: hand.landmarks,
-          palmCenter: palmCenter(hand.landmarks),
-          indexTip: hand.landmarks[8],
-        }))}
-        active={active}
-        loading={loading}
-        error={error}
-        label={label}
-        onToggle={() => (active ? stop() : start())}
-      />
     </div>
   );
 }
 
-/* ── Metadata Panel ── */
+/* ── Metadata Details Slide-In Panel ── */
 function MetadataPanel({ part, onClose }: { part: PartInfo; onClose: () => void }) {
   const entries = Object.entries(part.metadata).filter(
-    ([, value]) => value !== undefined && typeof value !== 'object'
+    ([, value]) => value !== undefined && typeof value !== 'object',
   );
 
   const identity = entries.filter(([key]) => ['name', 'uuid', 'type'].includes(key));
   const geometry = entries.filter(([key]) => ['vertices', 'triangles', 'dimensions'].includes(key));
   const materials = entries.filter(([key]) =>
-    ['material', 'castShadow', 'receiveShadow', 'visible'].includes(key)
+    ['material', 'castShadow', 'receiveShadow', 'visible'].includes(key),
   );
   const custom = entries.filter(
     ([key]) =>
@@ -495,7 +657,7 @@ function MetadataPanel({ part, onClose }: { part: PartInfo; onClose: () => void 
         'receiveShadow',
         'visible',
         'selectableId',
-      ].includes(key)
+      ].includes(key),
   );
 
   return (
@@ -503,11 +665,11 @@ function MetadataPanel({ part, onClose }: { part: PartInfo; onClose: () => void 
       <div style={panelHeaderStyle}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={panelAccentLabelStyle}>OKMK 3D METADATA</div>
-          <strong style={{ fontSize: 14, display: 'block', marginTop: 4, color: '#fff' }}>
+          <strong style={{ fontSize: 13, display: 'block', marginTop: 3, color: '#fff' }}>
             {part.name}
           </strong>
         </div>
-        <button onClick={onClose} style={closeStyle}>
+        <button type="button" onClick={onClose} style={closeStyle}>
           ✕
         </button>
       </div>
@@ -521,10 +683,6 @@ function MetadataPanel({ part, onClose }: { part: PartInfo; onClose: () => void 
         {custom.length > 0 && (
           <MetadataSection title="Qo'shimcha ma'lumotlar" entries={custom} />
         )}
-        <div style={{ marginTop: 12 }}>
-          <div style={sectionTitleStyle}>Xom JSON</div>
-          <pre style={jsonStyle}>{JSON.stringify(part.metadata, null, 2)}</pre>
-        </div>
       </div>
     </aside>
   );
@@ -538,7 +696,7 @@ function MetadataSection({
   entries: [string, unknown][];
 }) {
   return (
-    <div style={{ marginTop: 12 }}>
+    <div style={{ marginTop: 10 }}>
       <div style={sectionTitleStyle}>{title}</div>
       <div style={sectionBodyStyle}>
         {entries.map(([key, value]) => (
@@ -555,57 +713,6 @@ function MetadataSection({
 /* ══════════════════════════════════════════════════════════════════════════
    Styles
    ══════════════════════════════════════════════════════════════════════════ */
-
-const headerStyle: React.CSSProperties = {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  height: 58,
-  zIndex: 50,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: '0 20px',
-  borderBottom: '1px solid var(--border)',
-  background: 'rgba(10, 13, 22, 0.92)',
-  backdropFilter: 'blur(12px)',
-};
-
-const subtleStyle: React.CSSProperties = {
-  color: 'var(--text-muted)',
-  fontSize: 11,
-  fontFamily: 'var(--font-mono)',
-  marginTop: 2,
-};
-
-const buttonStyle: React.CSSProperties = {
-  padding: '7px 14px',
-  borderRadius: 8,
-  border: '1px solid var(--border)',
-  background: 'var(--bg-surface-2)',
-  color: 'var(--text-main)',
-  cursor: 'pointer',
-  fontSize: 12,
-  fontFamily: 'var(--font-mono)',
-  fontWeight: 500,
-};
-
-const hintStyle: React.CSSProperties = {
-  position: 'absolute',
-  left: 20,
-  bottom: 20,
-  zIndex: 20,
-  padding: '10px 16px',
-  borderRadius: 10,
-  background: 'rgba(10, 13, 22, 0.88)',
-  border: '1px solid var(--border)',
-  backdropFilter: 'blur(10px)',
-  fontFamily: 'var(--font-mono)',
-  fontSize: 12,
-  maxWidth: 360,
-};
-
 const loadingStyle: React.CSSProperties = {
   position: 'absolute',
   inset: 0,
@@ -613,49 +720,65 @@ const loadingStyle: React.CSSProperties = {
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  color: 'var(--cyan)',
-  fontFamily: 'var(--font-mono)',
+  color: 'var(--cyan, #00e5ff)',
+  fontFamily: 'var(--f-mono, monospace)',
   fontSize: 14,
+};
+
+const hintStyle: React.CSSProperties = {
+  position: 'absolute',
+  left: 16,
+  bottom: 16,
+  zIndex: 20,
+  padding: '8px 14px',
+  borderRadius: 8,
+  background: 'rgba(10, 13, 22, 0.88)',
+  border: '1px solid rgba(0, 229, 255, 0.2)',
+  backdropFilter: 'blur(10px)',
+  fontFamily: 'var(--f-mono, monospace)',
+  fontSize: 11,
+  maxWidth: 320,
+  boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
 };
 
 const cursorStyle: React.CSSProperties = {
   position: 'absolute',
   zIndex: 45,
-  width: 28,
-  height: 28,
-  margin: -14,
+  width: 24,
+  height: 24,
+  margin: -12,
   pointerEvents: 'none',
-  border: '2px solid var(--cyan)',
+  border: '2px solid var(--cyan, #00e5ff)',
   borderRadius: '50%',
   background: 'rgba(0, 229, 255, 0.12)',
-  boxShadow: '0 0 18px var(--cyan)',
+  boxShadow: '0 0 16px var(--cyan, #00e5ff)',
   transition:
-    'left 100ms linear, top 100ms linear, width 200ms ease, height 200ms ease, margin 200ms ease, border-color 200ms ease, box-shadow 200ms ease',
+    'left 80ms linear, top 80ms linear, width 180ms ease, height 180ms ease',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
 };
 
 const cursorSnappedStyle: React.CSSProperties = {
-  width: 36,
-  height: 36,
-  margin: -18,
+  width: 32,
+  height: 32,
+  margin: -16,
   borderColor: '#10b981',
-  boxShadow: '0 0 24px rgba(16, 185, 129, 0.5), 0 0 48px rgba(16, 185, 129, 0.2)',
-  background: 'rgba(16, 185, 129, 0.15)',
+  boxShadow: '0 0 20px rgba(16, 185, 129, 0.6)',
+  background: 'rgba(16, 185, 129, 0.18)',
 };
 
 const cursorInnerDotStyle: React.CSSProperties = {
-  width: 6,
-  height: 6,
+  width: 5,
+  height: 5,
   borderRadius: '50%',
-  background: 'var(--cyan)',
-  boxShadow: '0 0 8px var(--cyan)',
+  background: 'var(--cyan, #00e5ff)',
+  boxShadow: '0 0 6px var(--cyan, #00e5ff)',
 };
 
 const cursorRippleStyle: React.CSSProperties = {
   position: 'absolute',
-  inset: -6,
+  inset: -5,
   borderRadius: '50%',
   border: '1.5px solid rgba(16, 185, 129, 0.4)',
   animation: 'cursorRipple 1.2s ease-out infinite',
@@ -664,60 +787,59 @@ const cursorRippleStyle: React.CSSProperties = {
 const panelStyle: React.CSSProperties = {
   position: 'absolute',
   zIndex: 46,
-  left: 20,
-  top: 74,
-  width: 350,
-  maxHeight: 'calc(100vh - 160px)',
+  left: 16,
+  top: 16,
+  width: 320,
+  maxHeight: 'calc(100% - 32px)',
   overflow: 'hidden',
-  borderRadius: 'var(--radius)',
-  border: '1px solid var(--border-bright)',
-  background: 'rgba(12, 16, 28, 0.96)',
-  boxShadow: '0 20px 60px rgba(0, 0, 0, 0.65), var(--cyan-glow)',
+  borderRadius: 12,
+  border: '1px solid rgba(0, 229, 255, 0.25)',
+  background: 'rgba(12, 16, 28, 0.94)',
+  boxShadow: '0 20px 60px rgba(0, 0, 0, 0.65)',
   backdropFilter: 'blur(16px)',
   fontSize: 12,
   display: 'flex',
   flexDirection: 'column',
-  animation: 'panelSlideIn 280ms cubic-bezier(.22,1,.36,1)',
 };
 
 const panelHeaderStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'flex-start',
   justifyContent: 'space-between',
-  gap: 12,
-  padding: '14px 18px 12px',
-  borderBottom: '1px solid var(--border)',
+  gap: 10,
+  padding: '12px 14px 10px',
+  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
   background: 'rgba(22, 30, 51, 0.6)',
 };
 
 const panelAccentLabelStyle: React.CSSProperties = {
-  color: 'var(--cyan)',
-  fontSize: 10,
-  letterSpacing: 1.5,
-  fontFamily: 'var(--font-mono)',
-  fontWeight: 600,
+  color: 'var(--cyan, #00e5ff)',
+  fontSize: 9,
+  letterSpacing: 1.2,
+  fontFamily: 'var(--f-mono, monospace)',
+  fontWeight: 700,
   textTransform: 'uppercase',
 };
 
 const panelBodyStyle: React.CSSProperties = {
   overflow: 'auto',
-  padding: '8px 18px 18px',
+  padding: '6px 14px 14px',
 };
 
 const sectionTitleStyle: React.CSSProperties = {
   fontSize: 10,
-  letterSpacing: 1.2,
+  letterSpacing: 1.0,
   textTransform: 'uppercase',
-  color: 'var(--text-muted)',
-  fontFamily: 'var(--font-mono)',
+  color: 'var(--text-muted, #94a3b8)',
+  fontFamily: 'var(--f-mono, monospace)',
   fontWeight: 600,
-  marginBottom: 8,
+  marginBottom: 6,
   paddingTop: 4,
 };
 
 const sectionBodyStyle: React.CSSProperties = {
   borderRadius: 8,
-  border: '1px solid var(--border)',
+  border: '1px solid rgba(255, 255, 255, 0.08)',
   background: 'rgba(22, 30, 51, 0.45)',
   overflow: 'hidden',
 };
@@ -725,44 +847,31 @@ const sectionBodyStyle: React.CSSProperties = {
 const closeStyle: React.CSSProperties = {
   border: 0,
   background: 'transparent',
-  color: 'var(--text-muted)',
+  color: 'var(--text-muted, #94a3b8)',
   cursor: 'pointer',
-  fontSize: 16,
-  padding: '2px 6px',
-  borderRadius: 6,
+  fontSize: 14,
+  padding: '2px 4px',
+  borderRadius: 4,
 };
 
 const rowStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '110px 1fr',
+  gridTemplateColumns: '100px 1fr',
   gap: 8,
-  padding: '7px 10px',
-  borderBottom: '1px solid rgba(56, 189, 248, 0.08)',
+  padding: '6px 8px',
+  borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
   alignItems: 'baseline',
 };
 
 const rowLabelStyle: React.CSSProperties = {
-  color: 'var(--text-muted)',
-  fontSize: 11,
-  fontFamily: 'var(--font-mono)',
+  color: 'var(--text-muted, #94a3b8)',
+  fontSize: 10,
+  fontFamily: 'var(--f-mono, monospace)',
 };
 
 const rowValueStyle: React.CSSProperties = {
-  color: 'var(--text-main)',
+  color: 'var(--text-pri, #e2e8f0)',
   fontSize: 11,
   fontWeight: 500,
   wordBreak: 'break-all',
-};
-
-const jsonStyle: React.CSSProperties = {
-  whiteSpace: 'pre-wrap',
-  overflowWrap: 'anywhere',
-  color: 'var(--text-muted)',
-  fontSize: 10,
-  lineHeight: 1.5,
-  background: 'rgba(22, 30, 51, 0.45)',
-  border: '1px solid var(--border)',
-  borderRadius: 8,
-  padding: '10px 12px',
-  marginTop: 6,
 };

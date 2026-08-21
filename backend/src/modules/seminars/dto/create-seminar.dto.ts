@@ -38,6 +38,10 @@ export class CreateSeminarDto {
   @IsOptional()
   scheduledAt?: string;
 
+  @IsString()
+  @IsOptional()
+  coverImageUrl?: string;
+
   @IsArray()
   @IsString({ each: true })
   @IsOptional()

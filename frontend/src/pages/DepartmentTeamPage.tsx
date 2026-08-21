@@ -1,4 +1,3 @@
-// src/pages/DepartmentTeamPage.tsx
 import React, { useEffect, useState } from 'react';
 import { usersApi } from '../services/api';
 import { User } from '../types';
@@ -22,7 +21,7 @@ export const DepartmentTeamPage: React.FC = () => {
           setTeamMembers(res.items);
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => {
         if (mounted) setLoading(false);
       });

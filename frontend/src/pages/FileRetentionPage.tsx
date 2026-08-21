@@ -2,9 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { filesApi } from '../services/api';
 import { StatCard } from '../components/dashboard/StatCard';
+import { ConfirmModal } from '../components/common/ConfirmModal';
+import { useToast } from '../context/ToastContext';
 import { useI18n } from '../utils/i18n';
+import { Clock, SquareOff, Trash, X } from 'lucide-react';
 
 export const FileRetentionPage: React.FC = () => {
+  const toast = useToast();
   const t = useI18n();
 
   const [candidates, setCandidates] = useState<any[]>([]);
@@ -15,7 +19,7 @@ export const FileRetentionPage: React.FC = () => {
   const [reason, setReason] = useState(
     "Eski va kam foydalanilgan fayllar xotirani tejash maqsadida o'chirilishga qo'yildi",
   );
-  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [forceDeleteId, setForceDeleteId] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -26,7 +30,7 @@ export const FileRetentionPage: React.FC = () => {
       ]);
       if (Array.isArray(candRes)) setCandidates(candRes);
       if (Array.isArray(pendRes)) setPendingFiles(pendRes);
-    } catch {}
+    } catch { }
     finally {
       setLoading(false);
     }
@@ -38,7 +42,7 @@ export const FileRetentionPage: React.FC = () => {
 
   const handleSelectToggle = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
@@ -46,29 +50,36 @@ export const FileRetentionPage: React.FC = () => {
     if (selectedIds.length === 0) return;
     try {
       await filesApi.markCleanup(selectedIds, retentionDays, reason);
-      setActionSuccess(
+      toast.success(
         `${selectedIds.length} ta fayl ${retentionDays} kundan so'ng o'chirilishga belgilandi`,
       );
       setSelectedIds([]);
       loadData();
-    } catch {}
+    } catch {
+      toast.error("Fayllarni tozalashga belgilashda xatolik");
+    }
   };
 
   const handleCancelCleanup = async (fileIds: string[]) => {
     try {
       await filesApi.cancelCleanup(fileIds);
-      setActionSuccess("Fayllarni o'chirish bekor qilindi");
+      toast.success("Fayllarni o'chirish bekor qilindi");
       loadData();
-    } catch {}
+    } catch {
+      toast.error("Bekor qilishda xatolik");
+    }
   };
 
-  const handleForceDelete = async (fileId: string) => {
-    if (window.confirm("Haqiqatan ham ushbu faylni butunlay o'chirmoqchimisiz?")) {
-      try {
-        await filesApi.forceDelete(fileId);
-        setActionSuccess("Fayl butunlay o'chirildi");
-        loadData();
-      } catch {}
+  const handleForceDeleteConfirm = async () => {
+    if (!forceDeleteId) return;
+    try {
+      await filesApi.forceDelete(forceDeleteId);
+      toast.success("Fayl butunlay o'chirildi");
+      loadData();
+    } catch {
+      toast.error("Faylni o'chirishda xatolik");
+    } finally {
+      setForceDeleteId(null);
     }
   };
 
@@ -83,13 +94,17 @@ export const FileRetentionPage: React.FC = () => {
         </div>
       </div>
 
-      {actionSuccess && (
-        <div style={{ background: 'var(--green-lt)', border: '1px solid var(--green-bdr)', color: 'var(--green)', padding: '10px 14px', borderRadius: 'var(--r-md)', fontSize: 13, marginBottom: 16 }}>
-          {actionSuccess}
-        </div>
-      )}
+      <ConfirmModal
+        open={Boolean(forceDeleteId)}
+        onCancel={() => setForceDeleteId(null)}
+        onConfirm={handleForceDeleteConfirm}
+        title="Faylni o'chirish"
+        message="Haqiqatan ham ushbu faylni butunlay o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi."
+        confirmText="O'chirish"
+        cancelText="Bekor qilish"
+        variant="danger"
+      />
 
-      {/* Stats */}
       <div className="stats-strip">
         <StatCard
           title="O'chirishga qo'yilgan"
@@ -118,7 +133,6 @@ export const FileRetentionPage: React.FC = () => {
       </div>
 
       <div className="admin-page-body">
-        {/* Section 1: Pending Scheduled Deletions */}
         <div className="card admin-table-card" style={{ marginBottom: 20 }}>
           <div className="card-header">
             <div>
@@ -160,14 +174,14 @@ export const FileRetentionPage: React.FC = () => {
                             className="btn btn-ghost btn-sm"
                             onClick={() => handleCancelCleanup([f.id])}
                           >
-                            Bekor qilish
+                            <X /> Bekor qilish
                           </button>
                           <button
                             type="button"
                             className="btn btn-danger btn-sm"
-                            onClick={() => handleForceDelete(f.id)}
+                            onClick={() => setForceDeleteId(f.id)}
                           >
-                            O'chirish
+                            <Trash /> O'chirish
                           </button>
                         </td>
                       </tr>
@@ -179,7 +193,6 @@ export const FileRetentionPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Section 2: Cleanup Candidates */}
         <div className="card admin-table-card">
           <div className="card-header">
             <div>
@@ -202,14 +215,14 @@ export const FileRetentionPage: React.FC = () => {
                   className="btn btn-danger btn-sm"
                   onClick={handleMarkCleanup}
                 >
-                  Tanlanganlarni o'chirishga qo'yish ({selectedIds.length})
+                  <Clock /> Tanlanganlarni o'chirishga qo'yish ({selectedIds.length})
                 </button>
               </div>
             )}
           </div>
           <div className="card-body">
             {candidates.length === 0 ? (
-              <div className="empty-state">Tozalashga nomzod eski fayllar topilmadi</div>
+              <div className="empty-state"><SquareOff /> Tozalashga nomzod eski fayllar topilmadi</div>
             ) : (
               <div className="table-wrap">
                 <table className="tbl admin-table">
@@ -258,9 +271,9 @@ export const FileRetentionPage: React.FC = () => {
                           <button
                             type="button"
                             className="btn btn-ghost btn-sm"
-                            onClick={() => handleForceDelete(c.id)}
+                            onClick={() => setForceDeleteId(c.id)}
                           >
-                            Darhol o'chirish
+                            <Trash /> Darhol o'chirish
                           </button>
                         </td>
                       </tr>

@@ -61,6 +61,7 @@ export interface Seminar {
   endedAt?: string;
   isLive: boolean;
   isRecorded: boolean;
+  coverImageUrl?: string;
   viewCount: number;
   createdAt: string;
   updatedAt: string;

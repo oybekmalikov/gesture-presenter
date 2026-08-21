@@ -25,12 +25,17 @@ export function getApiBaseUrl(): string {
 export function getWsBaseUrl(): string {
   if (typeof window === 'undefined') return 'http://localhost:5050';
   if (import.meta.env.VITE_WS_URL) return import.meta.env.VITE_WS_URL;
+  return window.location.origin;
+}
 
+export function getWsPath(): string {
+  if (typeof window === 'undefined') return '/socket.io';
   const pathname = window.location.pathname;
   if (pathname.startsWith('/presenter')) {
-    return `${window.location.origin}/presenter`;
+    return '/presenter/socket.io';
+
   }
-  return window.location.origin;
+  return '/socket.io';
 }
 
 export const apiClient: AxiosInstance = axios.create({
@@ -41,7 +46,6 @@ export const apiClient: AxiosInstance = axios.create({
   },
 });
 
-// Request interceptor: attach token
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('okmk_access_token');
@@ -53,7 +57,6 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Response interceptor: handle 401
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -87,7 +90,6 @@ apiClient.interceptors.response.use(
             return apiClient(originalRequest);
           }
         } catch {
-          // Token refresh failed -> clear tokens
           localStorage.removeItem('okmk_access_token');
           localStorage.removeItem('okmk_refresh_token');
           localStorage.removeItem('okmk_user');
@@ -98,7 +100,6 @@ apiClient.interceptors.response.use(
   },
 );
 
-// ==================== AUTH SERVICE ====================
 export const authApi = {
   login: async (username: string, password: string): Promise<LoginResponse> => {
     const res = await apiClient.post<ApiResponse<LoginResponse>>('/auth/login', {
@@ -125,7 +126,6 @@ export const authApi = {
   },
 };
 
-// ==================== DASHBOARD SERVICE ====================
 export const dashboardApi = {
   getDashboard: async (): Promise<DashboardResponseData> => {
     const res = await apiClient.get<ApiResponse<DashboardResponseData>>('/dashboard');
@@ -147,13 +147,16 @@ export const dashboardApi = {
     const res = await apiClient.get<ApiResponse<any>>('/dashboard/admin');
     return res.data.data;
   },
+  getStats: async (): Promise<any> => {
+    const res = await apiClient.get<ApiResponse<any>>('/dashboard/stats');
+    return res.data.data;
+  },
   getSuperadminDashboard: async (): Promise<any> => {
     const res = await apiClient.get<ApiResponse<any>>('/dashboard/superadmin');
     return res.data.data;
   },
 };
 
-// ==================== SEMINARS SERVICE ====================
 export const seminarsApi = {
   findAll: async (
     params?: QuerySeminarParams,
@@ -226,7 +229,6 @@ export const seminarsApi = {
   },
 };
 
-// ==================== FILES SERVICE ====================
 export const filesApi = {
   uploadFile: async (seminarId: string, file: File) => {
     const formData = new FormData();
@@ -245,6 +247,18 @@ export const filesApi = {
     files.forEach((f) => formData.append('files', f));
     const res = await apiClient.post<ApiResponse>(
       `/files/upload/${seminarId}/multiple`,
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      },
+    );
+    return res.data.data;
+  },
+  uploadCover: async (file: File): Promise<{ url: string; filename: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await apiClient.post<ApiResponse<{ url: string; filename: string }>>(
+      '/files/upload-cover',
       formData,
       {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -305,7 +319,6 @@ export const filesApi = {
     `${getApiBaseUrl()}/files/${fileId}/download`,
 };
 
-// ==================== INTERACTIONS SERVICE ====================
 export const interactionsApi = {
   toggleLike: async (
     seminarId: string,
@@ -340,7 +353,6 @@ export const interactionsApi = {
   },
 };
 
-// ==================== USERS & PROFILE SERVICE ====================
 export const usersApi = {
   getMyProfile: async (): Promise<User> => {
     const res = await apiClient.get<ApiResponse<User>>('/users/profile/me');
@@ -415,7 +427,6 @@ export const usersApi = {
   },
 };
 
-// ==================== DEPARTMENTS SERVICE ====================
 export const departmentsApi = {
   getOrgTree: async () => {
     const res = await apiClient.get<ApiResponse>('/departments/tree');
@@ -456,7 +467,6 @@ export const departmentsApi = {
   },
 };
 
-// ==================== LIVE STREAMING SERVICE ====================
 export const liveApi = {
   getActiveSessions: async () => {
     const res = await apiClient.get<ApiResponse>('/live/active');
@@ -494,7 +504,6 @@ export const liveApi = {
   },
 };
 
-// ==================== NOTIFICATIONS SERVICE ====================
 export const notificationsApi = {
   getAll: async (page = 1, limit = 20, unreadOnly = false) => {
     const res = await apiClient.get<ApiResponse>('/notifications', {
@@ -528,7 +537,6 @@ export const notificationsApi = {
   },
 };
 
-// ==================== AUDIT SERVICE (SUPERADMIN) ====================
 export const auditApi = {
   findAll: async (page = 1, limit = 50, action?: string, entityType?: string) => {
     const res = await apiClient.get<ApiResponse>('/audit', {
@@ -538,7 +546,6 @@ export const auditApi = {
   },
 };
 
-// ==================== AI ASSISTANT SERVICE ====================
 export const aiApi = {
   getTemplates: async () => {
     const res = await apiClient.get<ApiResponse>('/ai/templates');
@@ -578,7 +585,6 @@ export const aiApi = {
   },
 };
 
-// ==================== LEGACY COMPATIBILITY ====================
 export const ApiService = {
   uploadFile: async (file: File, seminarId = 'general') => {
     return filesApi.uploadFile(seminarId, file);

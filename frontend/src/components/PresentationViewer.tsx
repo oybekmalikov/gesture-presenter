@@ -26,6 +26,9 @@ export function PresentationViewer({
 	);
 	const [errorMsg, setErrorMsg] = useState('');
 
+	const onReadyRef = useRef(onReady);
+	onReadyRef.current = onReady;
+
 	useEffect(() => {
 		let cancelled = false;
 		setStatus('loading');
@@ -34,7 +37,7 @@ export function PresentationViewer({
 			.then(doc => {
 				if (cancelled) return;
 				pdfRef.current = doc;
-				onReady?.(doc.numPages);
+				onReadyRef.current?.(doc.numPages);
 				setStatus('ready');
 			})
 			.catch(err => {
@@ -47,7 +50,7 @@ export function PresentationViewer({
 			task.destroy();
 			pdfRef.current = null;
 		};
-	}, [fileUrl, onReady]);
+	}, [fileUrl]);
 
 	useEffect(() => {
 		if (status !== 'ready') return;

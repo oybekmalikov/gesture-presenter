@@ -523,7 +523,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           )}
 
-          {/* ── Bottom Analytics row matching ui-overview1.png ── */}
+          {/* ── Bottom Analytics row ── */}
           <div
             style={{
               display: 'grid',
@@ -532,33 +532,36 @@ export const Dashboard: React.FC<DashboardProps> = ({
               marginTop: 4,
             }}
           >
-            {/* Box 1: Qoidabuzarlik dinamikasi / Taqdimot faolligi */}
+            {/* Box 1: Taqdimotlar faolligi */}
             <div style={analyticsBoxStyle}>
               <div style={analyticsHeaderStyle}>
-                <span>Taqdimotlar dinamikasi</span>
-                <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>Bugun</span>
+                <span>Taqdimotlar oqimi</span>
+                <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>Jonli</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 60, marginTop: 10 }}>
-                {[35, 60, 45, 80, 50, 95, 70, 85, 65, 90, 75, 100].map((h, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      flex: 1,
-                      height: `${h}%`,
-                      background: i % 2 === 0 ? 'var(--blue)' : 'var(--cyan)',
-                      borderRadius: '2px 2px 0 0',
-                      opacity: 0.85,
-                    }}
-                  />
-                ))}
+                {Array.from({ length: 8 }).map((_, i) => {
+                  const barHeight = Math.min(100, Math.max(25, (recentFiles.length * 15 + (i * 11)) % 100));
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        flex: 1,
+                        height: `${barHeight}%`,
+                        background: i % 2 === 0 ? 'var(--blue)' : 'var(--cyan)',
+                        borderRadius: '2px 2px 0 0',
+                        opacity: 0.85,
+                      }}
+                    />
+                  );
+                })}
               </div>
             </div>
 
-            {/* Box 2: SHHV talablariga rioya / AI Gesture Aniqligi */}
+            {/* Box 2: AI Gesture Aniqligi */}
             <div style={analyticsBoxStyle}>
               <div style={analyticsHeaderStyle}>
-                <span>AI Gesture aniqlik darajasi</span>
-                <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>Bugun</span>
+                <span>AI Imo-ishora aniqligi</span>
+                <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>MediaPipe</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 60, marginTop: 10 }}>
                 <div
@@ -573,36 +576,37 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     flexDirection: 'column',
                   }}
                 >
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>94%</span>
-                  <span style={{ fontSize: 7, color: 'var(--text-muted)' }}>MUVOFIQ</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>98.4%</span>
+                  <span style={{ fontSize: 7, color: 'var(--text-muted)' }}>FAOL</span>
                 </div>
               </div>
             </div>
 
-            {/* Box 3: Hududlar bo'yicha xavf xaritasi / Server holati */}
+            {/* Box 3: Tizim xavfsizligi va klaster */}
             <div style={analyticsBoxStyle}>
               <div style={analyticsHeaderStyle}>
-                <span>Tizim holati matritsasi</span>
-                <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>Bugun</span>
+                <span>Klaster va Kanallar</span>
+                <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>Real-time</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, marginTop: 10 }}>
-                {Array.from({ length: 8 }).map((_, idx) => (
+                {['SRV-1', 'WS-LIVE', 'CAD-3D', 'AI-CV', 'DB-PG', 'REDIS', 'MEDIA', 'STORAGE'].map((srv, idx) => (
                   <div
                     key={idx}
                     style={{
                       height: 26,
                       borderRadius: 4,
-                      background: idx === 1 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.15)',
-                      border: `1px solid ${idx === 1 ? 'var(--amber)' : 'var(--success)'}`,
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid var(--success)',
                       fontSize: 8,
                       fontFamily: 'var(--font-mono)',
-                      color: idx === 1 ? 'var(--amber)' : 'var(--success)',
+                      color: 'var(--success)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      fontWeight: 600,
                     }}
                   >
-                    CAM-{idx + 1}
+                    {srv}
                   </div>
                 ))}
               </div>

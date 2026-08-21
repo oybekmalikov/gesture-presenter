@@ -3,6 +3,7 @@ if (!globalThis.crypto) {
   (globalThis as any).crypto = crypto;
 }
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
@@ -11,7 +12,7 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 
@@ -21,12 +22,23 @@ async function bootstrap() {
     'uploads/avatars',
     'uploads/media',
     'uploads/temp',
+    'public/models',
   ];
   for (const dir of uploadDirs) {
     const fullPath = path.resolve(process.cwd(), dir);
     if (!fs.existsSync(fullPath)) {
       fs.mkdirSync(fullPath, { recursive: true });
     }
+  }
+
+  // Serve static uploads and models
+  app.useStaticAssets(path.resolve(process.cwd(), 'uploads'), {
+    prefix: '/uploads/',
+  });
+  if (fs.existsSync(path.resolve(process.cwd(), 'public/models'))) {
+    app.useStaticAssets(path.resolve(process.cwd(), 'public/models'), {
+      prefix: '/models/',
+    });
   }
 
   app.setGlobalPrefix('api/v1', { exclude: ['health'] });

@@ -1,11 +1,13 @@
-// src/pages/ProfilePage.tsx
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { ConfirmModal } from '../components/common/ConfirmModal';
 import { usersApi, authApi } from '../services/api';
 import { useI18n } from '../utils/i18n';
 
 export const ProfilePage: React.FC = () => {
   const { user, refreshUser } = useAuth();
+  const toast = useToast();
   const t = useI18n();
 
   const [fio, setFio] = useState(user?.fio || '');
@@ -19,52 +21,47 @@ export const ProfilePage: React.FC = () => {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
-
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showAvatarDeleteConfirm, setShowAvatarDeleteConfirm] = useState(false);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setAvatarLoading(true);
-      setErrorMsg(null);
       try {
         await usersApi.uploadAvatar(file);
         await refreshUser();
-        setSuccessMsg('Profil rasmi muvaffaqiyatli yuklandi');
+        toast.success('Profil rasmi muvaffaqiyatli yuklandi');
       } catch {
-        setErrorMsg('Rasm yuklashda xatolik yuz berdi');
+        toast.error('Rasm yuklashda xatolik yuz berdi');
       } finally {
         setAvatarLoading(false);
       }
     }
   };
 
-  const handleDeleteAvatar = async () => {
-    if (window.confirm("Profil rasmini o'chirmoqchimisiz?")) {
-      setAvatarLoading(true);
-      try {
-        await usersApi.deleteAvatar();
-        await refreshUser();
-        setSuccessMsg("Profil rasmi o'chirildi");
-      } catch {}
-      finally {
-        setAvatarLoading(false);
-      }
+  const handleDeleteAvatarConfirm = async () => {
+    setAvatarLoading(true);
+    try {
+      await usersApi.deleteAvatar();
+      await refreshUser();
+      toast.success("Profil rasmi o'chirildi");
+    } catch {
+      toast.error("Rasm o'chirishda xatolik yuz berdi");
+    } finally {
+      setAvatarLoading(false);
+      setShowAvatarDeleteConfirm(false);
     }
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileSaving(true);
-    setErrorMsg(null);
-    setSuccessMsg(null);
     try {
       await usersApi.updateMyProfile({ fio, email, phone });
       await refreshUser();
-      setSuccessMsg("Profil ma'lumotlari muvaffaqiyatli saqlandi");
+      toast.success("Profil ma'lumotlari muvaffaqiyatli saqlandi");
     } catch {
-      setErrorMsg("Ma'lumotlarni saqlashda xatolik yuz berdi");
+      toast.error("Ma'lumotlarni saqlashda xatolik yuz berdi");
     } finally {
       setProfileSaving(false);
     }
@@ -73,29 +70,27 @@ export const ProfilePage: React.FC = () => {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      setErrorMsg('Yangi parollar mos kelmadi');
+      toast.warning('Yangi parollar bir-biriga mos kelmadi');
       return;
     }
     if (newPassword.length < 6) {
-      setErrorMsg("Parol kamida 6 ta belgidan iborat bo'lishi kerak");
+      toast.warning("Parol kamida 6 ta belgidan iborat bo'lishi kerak");
       return;
     }
 
     setPasswordSaving(true);
-    setErrorMsg(null);
-    setSuccessMsg(null);
     try {
       await authApi.changePassword(oldPassword, newPassword);
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setSuccessMsg("Parol muvaffaqiyatli o'zgartirildi");
+      toast.success("Parol muvaffaqiyatli o'zgartirildi");
     } catch (err: any) {
       const msg =
         err.response?.data?.message?.uz ||
         err.response?.data?.message ||
         "Parolni o'zgartirishda xatolik";
-      setErrorMsg(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      toast.error(typeof msg === 'string' ? msg : JSON.stringify(msg));
     } finally {
       setPasswordSaving(false);
     }
@@ -112,20 +107,7 @@ export const ProfilePage: React.FC = () => {
         </div>
       </div>
 
-      {successMsg && (
-        <div style={{ background: 'var(--green-lt)', border: '1px solid var(--green-bdr)', color: 'var(--green)', padding: '10px 14px', borderRadius: 'var(--r-md)', fontSize: 13, marginBottom: 16 }}>
-          {successMsg}
-        </div>
-      )}
-
-      {errorMsg && (
-        <div style={{ background: 'var(--red-lt)', border: '1px solid var(--red-bdr)', color: 'var(--red)', padding: '10px 14px', borderRadius: 'var(--r-md)', fontSize: 13, marginBottom: 16 }}>
-          {errorMsg}
-        </div>
-      )}
-
       <div className="main-grid">
-        {/* Profile Card */}
         <div className="card" style={{ gridColumn: 'span 6' }}>
           <div className="card-header">
             <div>
@@ -134,7 +116,6 @@ export const ProfilePage: React.FC = () => {
             </div>
           </div>
           <div className="card-body" style={{ padding: 18 }}>
-            {/* Avatar Row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
               <div
                 style={{
@@ -168,7 +149,7 @@ export const ProfilePage: React.FC = () => {
                     type="button"
                     className="btn btn-danger btn-sm"
                     style={{ marginLeft: 8 }}
-                    onClick={handleDeleteAvatar}
+                    onClick={() => setShowAvatarDeleteConfirm(true)}
                   >
                     O'chirish
                   </button>
@@ -232,7 +213,6 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Change Password Card */}
         <div className="card" style={{ gridColumn: 'span 6' }}>
           <div className="card-header">
             <div>
@@ -289,6 +269,19 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {showAvatarDeleteConfirm && (
+        <ConfirmModal
+          open={showAvatarDeleteConfirm}
+          title="Profil rasmini o'chirish"
+          message="Haqiqatan ham profil rasmingizni o'chirmoqchimisiz?"
+          confirmText="O'chirish"
+          cancelText="Bekor qilish"
+          variant="danger"
+          onConfirm={handleDeleteAvatarConfirm}
+          onCancel={() => setShowAvatarDeleteConfirm(false)}
+        />
+      )}
     </div>
   );
 };

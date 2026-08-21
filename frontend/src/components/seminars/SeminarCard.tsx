@@ -53,9 +53,13 @@ export const SeminarCard: React.FC<SeminarCardProps> = ({
   seminar,
   onBookmarkChanged,
 }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, isAdmin, isSuperadmin } = useAuth();
   const navigate = useNavigate();
   const t = useI18n();
+
+  const isAuthor = Boolean(
+    isAuthenticated && (seminar.authorId === user?.id || isAdmin || isSuperadmin),
+  );
 
   const [isSaved, setIsSaved] = useState(Boolean(seminar.isSaved));
   const [saving, setSaving] = useState(false);
@@ -72,7 +76,7 @@ export const SeminarCard: React.FC<SeminarCardProps> = ({
       if (onBookmarkChanged) {
         onBookmarkChanged(seminar.id, res.isSaved);
       }
-    } catch {}
+    } catch { }
     finally {
       setSaving(false);
     }
@@ -205,6 +209,65 @@ export const SeminarCard: React.FC<SeminarCardProps> = ({
         </div>
       </div>
 
+      {/* Cover Image Banner (Point 3 & 6) */}
+      <div
+        style={{
+          width: '100%',
+          height: 130,
+          background: seminar.coverImageUrl
+            ? `url(${seminar.coverImageUrl}) center/cover no-repeat`
+            : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+          position: 'relative',
+          overflow: 'hidden',
+          borderBottom: '1px solid var(--border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {!seminar.coverImageUrl && (
+          <div
+            style={{
+              fontSize: 32,
+              opacity: 0.35,
+              filter: 'grayscale(0.5)',
+              transform: 'scale(1.1)',
+            }}
+          >
+            {isLive ? '🔴' : '📊'}
+          </div>
+        )}
+        {seminar.tags && seminar.tags.length > 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 8,
+              left: 10,
+              display: 'flex',
+              gap: 4,
+              flexWrap: 'wrap',
+              maxWidth: '90%',
+            }}
+          >
+            {seminar.tags.slice(0, 2).map((tg) => (
+              <span
+                key={tg.id || tg.name}
+                style={{
+                  fontSize: 10,
+                  padding: '2px 6px',
+                  borderRadius: 4,
+                  background: 'rgba(0,0,0,0.65)',
+                  color: '#e2e8f0',
+                  backdropFilter: 'blur(4px)',
+                }}
+              >
+                #{tg.name}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Card Body */}
       <div className="card-body" style={{ padding: '14px', display: 'flex', flexDirection: 'column', flex: 1 }}>
         <div
@@ -294,14 +357,16 @@ export const SeminarCard: React.FC<SeminarCardProps> = ({
             </span>
           </div>
 
-          {/* View button — bottom right */}
+          {/* View / Start button — bottom right */}
           <button
             type="button"
-            className={`btn ${isLive ? 'btn-danger' : 'btn-ghost'} btn-sm`}
+            className={`btn ${isLive ? 'btn-danger' : isAuthor ? 'btn-primary' : 'btn-ghost'} btn-sm`}
             style={{ fontSize: 11, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 4 }}
           >
             <PlayIcon />
-            {isLive ? t('Join Live') : t('Watch Recording')}
+            {isLive
+              ? (isAuthor ? "🔴 Efirni boshqarish" : "🔴 Jonli efirga qo'shilish")
+              : (isAuthor ? "🔴 Efirni boshlash" : (seminar.isRecorded ? "📹 Yozuvni ko'rish" : "📄 Taqdimotni ochish"))}
           </button>
         </div>
       </div>

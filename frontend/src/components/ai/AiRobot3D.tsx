@@ -1,4 +1,3 @@
-// src/components/ai/AiRobot3D.tsx
 import React, { useRef, useState, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, ContactShadows, Environment, Sphere } from '@react-three/drei';
@@ -11,8 +10,7 @@ function SmoothRobot({ isTalking, isWaving }: { isTalking: boolean; isWaving: bo
   const leftEyeRef = useRef<THREE.Mesh>(null);
   const rightEyeRef = useRef<THREE.Mesh>(null);
   const torsoRef = useRef<THREE.Group>(null);
-  
-  // Create shared materials to save performance and keep look consistent
+
   const materials = useMemo(() => {
     return {
       body: new THREE.MeshPhysicalMaterial({
@@ -48,7 +46,7 @@ function SmoothRobot({ isTalking, isWaving }: { isTalking: boolean; isWaving: bo
       const targetY = state.mouse.y * 0.5;
       headRef.current.rotation.y = THREE.MathUtils.lerp(headRef.current.rotation.y, targetX, 0.1);
       headRef.current.rotation.x = THREE.MathUtils.lerp(headRef.current.rotation.x, -targetY, 0.1);
-      
+
       // Talking bounce
       const talkingBounce = isTalking ? Math.sin(t * 15) * 0.03 : 0;
       headRef.current.position.y = THREE.MathUtils.lerp(headRef.current.position.y, 1.2 + talkingBounce, 0.1);
@@ -59,12 +57,12 @@ function SmoothRobot({ isTalking, isWaving }: { isTalking: boolean; isWaving: bo
       // Blink logic
       const isBlinking = Math.sin(t * 3.5) > 0.97;
       let targetEyeScale = isBlinking ? 0.05 : 1.0;
-      
+
       // If talking, eyes pulse to simulate speech
       if (isTalking && !isBlinking) {
         targetEyeScale = 0.8 + Math.sin(t * 20) * 0.3;
       }
-      
+
       leftEyeRef.current.scale.y = THREE.MathUtils.lerp(leftEyeRef.current.scale.y, targetEyeScale, 0.3);
       rightEyeRef.current.scale.y = THREE.MathUtils.lerp(rightEyeRef.current.scale.y, targetEyeScale, 0.3);
     }
@@ -103,7 +101,7 @@ function SmoothRobot({ isTalking, isWaving }: { isTalking: boolean; isWaving: bo
       <group ref={headRef} position={[0, 1.2, 0]}>
         {/* Head Base */}
         <Sphere args={[0.5, 64, 64]} castShadow receiveShadow material={materials.body} />
-        
+
         {/* Visor Cutout (Black Glass) */}
         <mesh position={[0, 0, 0.12]} rotation={[-0.1, 0, 0]}>
           <cylinderGeometry args={[0.49, 0.49, 0.45, 64, 1, false, -Math.PI / 2.5, Math.PI / 1.25]} />
@@ -115,7 +113,7 @@ function SmoothRobot({ isTalking, isWaving }: { isTalking: boolean; isWaving: bo
           <capsuleGeometry args={[0.05, 0.14, 16, 16]} />
           <primitive object={materials.eye} />
         </mesh>
-        
+
         <mesh ref={rightEyeRef} position={[0.18, 0.05, 0.44]} rotation={[0, 0.15, -0.1]}>
           <capsuleGeometry args={[0.05, 0.14, 16, 16]} />
           <primitive object={materials.eye} />
@@ -139,7 +137,7 @@ function SmoothRobot({ isTalking, isWaving }: { isTalking: boolean; isWaving: bo
           <capsuleGeometry args={[0.4, 0.5, 32, 64]} />
           <primitive object={materials.body} />
         </mesh>
-        
+
         {/* Glowing Heart / Core */}
         <mesh position={[0, 0.15, 0.38]}>
           <circleGeometry args={[0.08, 32]} />
@@ -162,7 +160,7 @@ function SmoothRobot({ isTalking, isWaving }: { isTalking: boolean; isWaving: bo
           <primitive object={materials.body} />
         </mesh>
       </group>
-      
+
       {/* FLOATING THRUSTER RINGS */}
       <mesh position={[0, -0.3, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[0.28, 0.02, 16, 64]} />
@@ -198,7 +196,7 @@ export const AiRobot3D: React.FC<{ isTalking?: boolean }> = ({ isTalking = false
       >
         {/* Environment map for super realistic reflections on the glass and plastic */}
         <Environment preset="city" />
-        
+
         {/* Professional Studio Lighting */}
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 10, 5]} intensity={2.5} castShadow shadow-mapSize={[1024, 1024]} />

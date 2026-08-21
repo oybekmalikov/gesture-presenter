@@ -29,3 +29,5 @@ temp/
 .vscode/
 .DS_Store
 Thumbs.db
+
+/current-task.md

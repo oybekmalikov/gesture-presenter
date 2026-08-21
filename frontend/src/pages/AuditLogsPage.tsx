@@ -1,4 +1,3 @@
-// src/pages/AuditLogsPage.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { auditApi } from '../services/api';
 import { useI18n } from '../utils/i18n';

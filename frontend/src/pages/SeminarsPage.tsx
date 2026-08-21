@@ -1,4 +1,3 @@
-// src/pages/SeminarsPage.tsx
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { seminarsApi } from '../services/api';
@@ -49,7 +48,7 @@ export const SeminarsPage: React.FC = () => {
         setTotal(res.total);
         setTotalPages(res.totalPages || 1);
       }
-    } catch {}
+    } catch { }
     finally {
       setLoading(false);
     }
@@ -65,7 +64,7 @@ export const SeminarsPage: React.FC = () => {
       .then((tags) => {
         if (Array.isArray(tags)) setPopularTags(tags);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleTabChange = (tab: string) => {
@@ -107,7 +106,6 @@ export const SeminarsPage: React.FC = () => {
 
   return (
     <div className="page active" id="page-seminars">
-      {/* Header */}
       <div className="page-hd">
         <div>
           <div className="pg-title">{t('Seminars')}</div>
@@ -128,9 +126,7 @@ export const SeminarsPage: React.FC = () => {
         )}
       </div>
 
-      {/* Search & Filter Bar */}
       <div className="filter-bar admin-filter-bar" style={{ flexWrap: 'wrap' }}>
-        {/* Main search */}
         <div style={{ position: 'relative', flex: '1 1 250px', minWidth: 200 }}>
           <svg
             width="14" height="14" viewBox="0 0 16 16" fill="none"
@@ -187,7 +183,6 @@ export const SeminarsPage: React.FC = () => {
           <option value="views">Ko'rishlar bo'yicha</option>
         </select>
 
-        {/* Advanced Search Toggle */}
         <button
           type="button"
           className={`btn ${showAdvanced ? 'btn-primary' : 'btn-ghost'} btn-sm`}
@@ -215,7 +210,6 @@ export const SeminarsPage: React.FC = () => {
         )}
       </div>
 
-      {/* Advanced Search Panel */}
       {showAdvanced && (
         <div
           style={{
@@ -285,7 +279,6 @@ export const SeminarsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Tags strip */}
       {popularTags.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '0 24px 16px', padding: 0 }}>
           {popularTags.map((tag) => (
@@ -301,7 +294,6 @@ export const SeminarsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Grid of Seminars */}
       <div className="admin-page-body">
         {loading ? (
           <div className="empty-state" style={{ padding: '60px 0' }}>
@@ -325,7 +317,6 @@ export const SeminarsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div style={{
             display: 'flex',
@@ -344,7 +335,6 @@ export const SeminarsPage: React.FC = () => {
               ← Oldingi
             </button>
 
-            {/* Page numbers */}
             {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
               let pageNum: number;
               if (totalPages <= 7) {
@@ -381,7 +371,6 @@ export const SeminarsPage: React.FC = () => {
         )}
       </div>
 
-      {/* Create Seminar Modal */}
       {isCreateModalOpen && (
         <CreateSeminarModal
           onClose={() => {

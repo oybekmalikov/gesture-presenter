@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
-import { notificationsApi, getWsBaseUrl } from '../services/api';
+import { notificationsApi, getWsBaseUrl, getWsPath } from '../services/api';
 
 interface NotificationItem {
   id: string;
@@ -60,11 +60,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
 
     fetchNotifications();
 
-    const socketUrl = getWsBaseUrl();
+    const origin = typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : 'http://localhost:5050';
+    const baseUrl = getWsBaseUrl() || origin;
+    const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const socketEndpoint = cleanBase.startsWith('http') ? `${cleanBase}/notifications` : `${origin}/notifications`;
     let socket: Socket | null = null;
 
     try {
-      socket = io(`${socketUrl}/notifications`, {
+      socket = io(socketEndpoint, {
+        path: getWsPath(),
         transports: ['websocket', 'polling'],
         withCredentials: true,
       });

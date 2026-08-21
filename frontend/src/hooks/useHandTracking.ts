@@ -129,7 +129,7 @@ export function useHandTracking(): HandTrackingState {
 						}));
 						const handednessLabel = result.handednesses[i]?.[0]?.categoryName;
 						return {
-							handedness: handednessLabel === 'Left' ? 'Right' : 'Left', // mirror flips L/R too
+							handedness: handednessLabel === 'Left' ? 'Right' : 'Left',
 							landmarks: mirrored,
 						};
 					});
